@@ -7,7 +7,6 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger (MonadLogger, logInfoN, runStderrLoggingT)
 import Data.Default.Class (def)
 import Data.Monoid ((<>))
-import Data.Text ()
 import qualified Data.Text as Text
 import Development.GitRev (gitHash)
 import Network.Wai.Handler.Warp

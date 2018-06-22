@@ -14,8 +14,9 @@ module Webserver
   ( app
   ) where
 
-import Data.Aeson.Types (ToJSON, object, toJSON)
+import Data.Aeson.Types (ToJSON, Value(String), object, toJSON)
 import Data.Proxy (Proxy(Proxy))
+import qualified Data.Text as Text
 import Data.Text (Text)
 import Data.Time.Calendar ()
 import Development.GitRev (gitHash)
@@ -23,7 +24,7 @@ import GHC.Generics (Generic)
 import Network.Wai (Application)
 import Network.Wai.Handler.Warp ()
 import Servant ((:<|>)((:<|>)), (:>), Get, JSON, PlainText, serve)
-import Servant.Server
+import Servant.Server (Server)
 import System.Directory ()
 
 data Status
@@ -32,10 +33,7 @@ data Status
   deriving (Show, Eq, Generic)
 
 instance ToJSON Status where
-  toJSON x = object [("status", encode x)]
-    where
-      encode Good = "good"
-      encode Bad = "bad"
+  toJSON x = object [("status", String . Text.pack . show $ x)]
 
 ------------------------------------------------------------
 type API
