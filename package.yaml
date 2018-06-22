@@ -38,7 +38,7 @@ dependencies:
 - monad-logger
 
 ghc-options:
-- -Wall
+- -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-import-lists
 
 library:
   source-dirs: src
