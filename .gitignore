@@ -1,0 +1,4 @@
+.stack-work/
+solidity-service.cabal
+*~
+/.dir-locals.el
