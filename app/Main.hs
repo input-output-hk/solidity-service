@@ -1,10 +1,22 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
-import Development.GitRev (gitHash)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Logger (MonadLogger, logInfoN, runStderrLoggingT)
 import Data.Monoid ((<>))
+import Data.Text ()
+import qualified Data.Text as Text
+import Development.GitRev (gitHash)
 import Network.Wai.Handler.Warp
+  ( HostPreference
+  , defaultSettings
+  , runSettings
+  , setHost
+  , setPort
+  )
+import Network.Wai.Middleware.RequestLogger (logStdout)
 import Options.Applicative
   ( Parser
   , auto
@@ -20,30 +32,37 @@ import Options.Applicative
   , prefs
   , short
   , showDefault
+  , strOption
   , value
   )
 import qualified Webserver
 
 data Command =
-  Run Int
+  Run HostPreference
+      Int
   deriving (Show, Eq)
 
 versionOption :: Parser (a -> a)
 versionOption =
-  (infoOption
-     $(gitHash)
-     (short 'v' <> long "version" <> help "Show the version"))
+  infoOption $(gitHash) (short 'v' <> long "version" <> help "Show the version")
 
 commandParser :: Parser Command
 commandParser =
   Run <$>
-  (option
-     auto
-     (short 'p' <> long "port" <> help "Webserver port number." <> showDefault <>
-      value 8080))
+  (strOption
+     (short 'b' <> long "bind" <> help "Webserver bind address" <> showDefault <>
+      value "127.0.0.1")) <*>
+  option
+    auto
+    (short 'p' <> long "port" <> help "Webserver port number" <> showDefault <>
+     value 8080)
 
-runCommand :: Command -> IO ()
-runCommand (Run port) = run port Webserver.app
+runCommand :: (MonadIO m, MonadLogger m) => Command -> m ()
+runCommand (Run host port) = do
+  logInfoN $ Text.pack $ "Running on " <> show host <> ":" <> show port
+  liftIO $ runSettings settings (logStdout Webserver.app)
+  where
+    settings = setHost host $ setPort port $ defaultSettings
 
 main :: IO ()
 main = do
@@ -51,4 +70,4 @@ main = do
     customExecParser
       (prefs disambiguate)
       (info (helper <*> versionOption <*> commandParser) idm)
-  runCommand command
+  runStderrLoggingT $ runCommand command

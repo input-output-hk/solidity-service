@@ -30,9 +30,11 @@ dependencies:
 - time
 - transformers
 - wai
+- wai-extra
 - warp
 - optparse-applicative
 - gitrev
+- monad-logger
 
 ghc-options:
 - -Wall

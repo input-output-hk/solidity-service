@@ -14,7 +14,7 @@ module Webserver
   ( app
   ) where
 
-import Data.Aeson.Types (ToJSON, toJSON)
+import Data.Aeson.Types (ToJSON, object, toJSON)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
 import Data.Time.Calendar ()
@@ -23,6 +23,7 @@ import GHC.Generics (Generic)
 import Network.Wai (Application)
 import Network.Wai.Handler.Warp ()
 import Servant ((:<|>)((:<|>)), (:>), Get, JSON, PlainText, serve)
+import Servant.Server
 import System.Directory ()
 
 data Status
@@ -44,13 +45,13 @@ api :: Proxy API
 api = Proxy
 
 ------------------------------------------------------------
-server :: Servant.Server.Internal.Handler.Handler Status :<|> Servant.Server.Internal.Handler.Handler Text
+server :: Server API
 server = healthcheck :<|> version
 
-healthcheck :: Servant.Server.Internal.Handler.Handler Status
+healthcheck :: Applicative m => m Status
 healthcheck = pure Good
 
-version :: Servant.Server.Internal.Handler.Handler Text
+version :: Applicative m => m Text
 version = pure $(gitHash)
 
 app :: Application
