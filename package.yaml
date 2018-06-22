@@ -31,6 +31,7 @@ dependencies:
 - transformers
 - wai
 - wai-extra
+- data-default-class
 - warp
 - optparse-applicative
 - gitrev
