@@ -14,35 +14,21 @@ module Webserver
   ( app
   ) where
 
-import Data.Aeson.Types (ToJSON, Value(String), object, toJSON)
 import Data.Proxy (Proxy(Proxy))
-import qualified Data.Text as Text
 import Data.Text (Text)
 import Data.Time.Calendar ()
 import Development.GitRev (gitHash)
-import GHC.Generics (Generic)
 import Network.Wai (Application)
 import Network.Wai.Handler.Warp ()
-import Servant ((:<|>)((:<|>)), (:>), Get, JSON, PlainText, serve)
+import Servant ((:<|>)((:<|>)), serve)
 import Servant.Server (Server)
 import System.Directory ()
-
-data Status
-  = Good
-  | Bad
-  deriving (Show, Eq, Generic)
-
-instance ToJSON Status where
-  toJSON x = object [("status", String . Text.pack . show $ x)]
-
-------------------------------------------------------------
-type API
-   = "healthcheck" :> Get '[ JSON] Status :<|> "version" :> Get '[ PlainText] Text
+import Webserver.API (API)
+import Webserver.Types (Status(Good))
 
 api :: Proxy API
 api = Proxy
 
-------------------------------------------------------------
 server :: Server API
 server = healthcheck :<|> version
 
