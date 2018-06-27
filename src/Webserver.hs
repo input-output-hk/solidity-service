@@ -14,6 +14,7 @@ module Webserver
   ( app
   ) where
 
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
 import Data.Time.Calendar ()
@@ -24,13 +25,25 @@ import Servant ((:<|>)((:<|>)), serve)
 import Servant.Server (Server)
 import System.Directory ()
 import Webserver.API (API)
-import Webserver.Types (Status(Good))
+import Webserver.Types
+  ( RPCCall(RPCCallSol2IELEAsm)
+  , RPCResponse(RPCResponse)
+  , Status(Good)
+  , compileSol2IELEAsm
+  )
 
 api :: Proxy API
 api = Proxy
 
 server :: Server API
-server = healthcheck :<|> version
+server = healthcheck :<|> version :<|> rpcHandler
+
+rpcHandler :: MonadIO m => RPCCall -> m RPCResponse
+rpcHandler (RPCCallSol2IELEAsm sol2IELEAsm) = do
+  result <- liftIO $ compileSol2IELEAsm sol2IELEAsm
+  case result of
+    Left err -> fail err
+    Right response -> pure $ RPCResponse response
 
 healthcheck :: Applicative m => m Status
 healthcheck = pure Good

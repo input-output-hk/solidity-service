@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -18,12 +20,19 @@ import Data.Aeson
   , withArray
   , withObject
   )
+import qualified Data.Map as Map
 import Data.Map.Strict (Map)
+import Data.Monoid ((<>))
 import qualified Data.Text as Text
 import Data.Text (Text)
+import qualified Data.Text.IO as Text
 import qualified Data.Vector as Vector
 import GHC.Generics (Generic)
-import PathUtils (TaintedPath)
+import PathUtils (TaintedPath, toSafePath)
+import System.Exit (ExitCode(ExitFailure, ExitSuccess))
+import System.FilePath.Posix ((</>))
+import System.IO.Temp (withSystemTempDirectory)
+import System.Process (proc, readCreateProcessWithExitCode)
 
 data Status
   = Good
@@ -69,3 +78,30 @@ instance FromJSON Sol2IELEAsm where
 makeLenses ''Sol2IELEAsm
 
 makePrisms ''RPCCall
+
+compileSol2IELEAsm :: Sol2IELEAsm -> IO (Either String Text)
+compileSol2IELEAsm Sol2IELEAsm {..} =
+  case toSafePath _mainFilename of
+    Nothing -> pure $ Left "Invalid path"
+    Just file ->
+      withSystemTempDirectory "solidity" $ \tempDir -> do
+        _ <- Map.traverseWithKey (writeTempFile tempDir) _files
+        let output = tempDir </> file
+        (result, _, stderr) <-
+          readCreateProcessWithExitCode (proc "solc" ["--asm", output]) ""
+        case result of
+          ExitSuccess -> do
+            Right <$> Text.readFile output
+          ExitFailure code ->
+            pure $
+            Left $ "Failed with exit code: " <> show code <> "\n" <> stderr
+  where
+    writeTempFile :: FilePath -> TaintedPath -> Text -> IO ()
+    writeTempFile tempDir taintedFilename contents =
+      case toSafePath taintedFilename of
+        Nothing -> fail "Invalid path"
+        Just file -> Text.writeFile (tempDir </> file) contents
+
+data RPCResponse =
+  RPCResponse Text
+  deriving (Show, Eq, Generic, ToJSON)
