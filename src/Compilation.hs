@@ -68,29 +68,28 @@ compileSol2IELEAsm Sol2IELEAsm {..} =
   case toSafePath _mainFilename of
     Nothing -> pure $ Left [InvalidInputPath _mainFilename]
     Just file ->
-      (withSystemTempDirectory "solidity" $ \tempDir -> do
-         r <-
-           lefts <$>
-           traverse
-             ((\(taintedFilename, contents) -> do
-                 (writeTempFile tempDir taintedFilename contents)))
-             (Map.toList _files)
-         case r of
-           [] -> do
-             let output = tempDir </> file
-             (compilationResult, stdout, stderr) <-
-               do logDebugN $ "Compiling: " <> showt output
-                  liftIO $
-                    readCreateProcessWithExitCode
-                      (proc "solc" ["--asm", output])
-                      ""
-             case compilationResult of
-               ExitSuccess -> do
-                 logDebugN $ "Compiled: " <> showt output
-                 pure . Right . Text.pack $ stdout
-               ExitFailure code ->
-                 pure $ Left [CompilationFailed code (Text.pack stderr)]
-           errors -> pure $ Left errors) >>=
+      withSystemTempDirectory
+        "solidity"
+        (\tempDir -> do
+           r <-
+             lefts <$>
+             traverse (uncurry (writeTempFile tempDir)) (Map.toList _files)
+           case r of
+             [] -> do
+               let output = tempDir </> file
+               (compilationResult, stdout, stderr) <-
+                 do logDebugN $ "Compiling: " <> showt output
+                    liftIO $
+                      readCreateProcessWithExitCode
+                        (proc "solc" ["--asm", output])
+                        ""
+               case compilationResult of
+                 ExitSuccess -> do
+                   logDebugN $ "Compiled: " <> showt output
+                   pure . Right . Text.pack $ stdout
+                 ExitFailure code ->
+                   pure $ Left [CompilationFailed code (Text.pack stderr)]
+             errors -> pure $ Left errors) >>=
       logAnyErrors
   where
     logAnyErrors result@(Left errors) = do
