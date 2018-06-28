@@ -15,6 +15,7 @@ module Webserver
   ( app
   ) where
 
+import Compilation (CompilationError, compileSol2IELEAsm)
 import Control.Monad.Except (throwError)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Logger (runStderrLoggingT)
@@ -31,11 +32,9 @@ import Servant.Server (Handler, Server)
 import System.Directory ()
 import Webserver.API (API)
 import Webserver.Types
-  ( CompilationError
-  , RPCCall(RPCCallSol2IELEAsm)
+  ( RPCCall(RPCCallSol2IELEAsm)
   , RPCResponse(RPCResponse)
   , Status(Good)
-  , compileSol2IELEAsm
   )
 
 api :: Proxy API

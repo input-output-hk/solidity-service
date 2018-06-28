@@ -8,7 +8,8 @@ import Data.Aeson (eitherDecode')
 import Data.Aeson.Lens ()
 import qualified Data.ByteString.Lazy as LBS
 import Test.Hspec (Spec, describe, it, shouldBe)
-import Webserver.Types (RPCCall, _RPCCallSol2IELEAsm, files, mainFilename)
+import Webserver.Types (RPCCall, _RPCCallSol2IELEAsm)
+import Compilation ( files, mainFilename)
 
 spec :: Spec
 spec =
