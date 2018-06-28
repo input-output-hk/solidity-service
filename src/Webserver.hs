@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DataKinds #-}
@@ -14,19 +15,24 @@ module Webserver
   ( app
   ) where
 
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Except (throwError)
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Logger (runStderrLoggingT)
+import Data.Aeson (encode)
+import Data.Bifunctor (bimap)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
 import Data.Time.Calendar ()
 import Development.GitRev (gitHash)
 import Network.Wai (Application)
 import Network.Wai.Handler.Warp ()
-import Servant ((:<|>)((:<|>)), serve)
-import Servant.Server (Server)
+import Servant ((:<|>)((:<|>)), ServantErr, err500, errBody, serve)
+import Servant.Server (Handler, Server)
 import System.Directory ()
 import Webserver.API (API)
 import Webserver.Types
-  ( RPCCall(RPCCallSol2IELEAsm)
+  ( CompilationError
+  , RPCCall(RPCCallSol2IELEAsm)
   , RPCResponse(RPCResponse)
   , Status(Good)
   , compileSol2IELEAsm
@@ -38,12 +44,17 @@ api = Proxy
 server :: Server API
 server = healthcheck :<|> version :<|> rpcHandler
 
-rpcHandler :: MonadIO m => RPCCall -> m RPCResponse
+rpcHandler :: RPCCall -> Handler RPCResponse
 rpcHandler (RPCCallSol2IELEAsm sol2IELEAsm) = do
-  result <- liftIO $ compileSol2IELEAsm sol2IELEAsm
+  result <-
+    liftIO $
+    runStderrLoggingT (bimap id RPCResponse <$> compileSol2IELEAsm sol2IELEAsm)
   case result of
-    Left err -> fail err
-    Right response -> pure $ RPCResponse response
+    Left errs -> throwError $ toServantError errs
+    Right response -> pure response
+
+toServantError :: [CompilationError] -> ServantErr
+toServantError errs = err500 {errBody = encode errs}
 
 healthcheck :: Applicative m => m Status
 healthcheck = pure Good

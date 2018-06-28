@@ -34,6 +34,7 @@ dependencies:
 - temporary
 - servant
 - servant-server
+- exceptions
 - text
 - time
 - transformers

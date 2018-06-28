@@ -1,4 +1,7 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -8,7 +11,11 @@
 
 module Webserver.Types where
 
+import Control.Exception (IOException, try)
 import Control.Lens (makeLenses, makePrisms)
+import Control.Monad.Catch (MonadMask)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Logger (MonadLogger, logDebugN, logErrorN)
 import Data.Aeson
   ( FromJSON
   , ToJSON
@@ -20,6 +27,8 @@ import Data.Aeson
   , withArray
   , withObject
   )
+import Data.Bifunctor (first)
+import Data.Either (lefts)
 import qualified Data.Map as Map
 import Data.Map.Strict (Map)
 import Data.Monoid ((<>))
@@ -34,16 +43,19 @@ import System.FilePath.Posix ((</>))
 import System.IO.Temp (withSystemTempDirectory)
 import System.Process (proc, readCreateProcessWithExitCode)
 
+showt :: Show a => a -> Text
+showt = Text.pack . show
+
 data Status
   = Good
   | Bad
   deriving (Show, Eq, Generic)
 
 instance ToJSON Status where
-  toJSON x = object [("status", String . Text.pack . show $ x)]
+  toJSON x = object [("status", String (showt x))]
 
 ------------------------------------------------------------
-data RPCCall =
+newtype RPCCall =
   RPCCallSol2IELEAsm Sol2IELEAsm
   deriving (Show, Eq, Generic)
 
@@ -79,29 +91,71 @@ makeLenses ''Sol2IELEAsm
 
 makePrisms ''RPCCall
 
-compileSol2IELEAsm :: Sol2IELEAsm -> IO (Either String Text)
+data CompilationError
+  = InvalidInputPath TaintedPath
+  | CompilationFailed Int
+                      Text
+  | IOError Text
+  deriving (Show, Eq, Generic, ToJSON)
+
+compileSol2IELEAsm ::
+     (MonadIO m, MonadLogger m, MonadMask m)
+  => Sol2IELEAsm
+  -> m (Either [CompilationError] Text)
 compileSol2IELEAsm Sol2IELEAsm {..} =
   case toSafePath _mainFilename of
-    Nothing -> pure $ Left "Invalid path"
+    Nothing -> pure $ Left [InvalidInputPath _mainFilename]
     Just file ->
-      withSystemTempDirectory "solidity" $ \tempDir -> do
-        _ <- Map.traverseWithKey (writeTempFile tempDir) _files
-        let output = tempDir </> file
-        (result, _, stderr) <-
-          readCreateProcessWithExitCode (proc "solc" ["--asm", output]) ""
-        case result of
-          ExitSuccess -> do
-            Right <$> Text.readFile output
-          ExitFailure code ->
-            pure $
-            Left $ "Failed with exit code: " <> show code <> "\n" <> stderr
+      (withSystemTempDirectory "solidity" $ \tempDir -> do
+         r <-
+           lefts <$>
+           traverse
+             ((\(taintedFilename, contents) -> do
+                 (writeTempFile tempDir taintedFilename contents)))
+             (Map.toList _files)
+         case r of
+           [] -> do
+             let output = tempDir </> file
+             (compilationResult, stdout, stderr) <-
+               do logDebugN $ "Compiling: " <> showt output
+                  liftIO $
+                    readCreateProcessWithExitCode
+                      (proc "solc" ["--asm", output])
+                      ""
+             case compilationResult of
+               ExitSuccess -> do
+                 logDebugN $ "Compiled: " <> showt output
+                 pure . Right . Text.pack $ stdout
+               ExitFailure code ->
+                 pure $ Left [CompilationFailed code (Text.pack stderr)]
+           errors -> pure $ Left errors) >>=
+      logAnyErrors
   where
-    writeTempFile :: FilePath -> TaintedPath -> Text -> IO ()
-    writeTempFile tempDir taintedFilename contents =
-      case toSafePath taintedFilename of
-        Nothing -> fail "Invalid path"
-        Just file -> Text.writeFile (tempDir </> file) contents
+    logAnyErrors result@(Left errors) = do
+      logErrorN $ "Compilation failed: " <> showt errors
+      pure result
+    logAnyErrors result = pure result
 
-data RPCResponse =
+writeTempFile ::
+     (MonadIO m, MonadLogger m)
+  => FilePath
+  -> TaintedPath
+  -> Text
+  -> m (Either CompilationError ())
+writeTempFile tempDir taintedFilename contents =
+  case toSafePath taintedFilename of
+    Nothing -> pure $ Left $ InvalidInputPath taintedFilename
+    Just file -> do
+      let destination = tempDir </> file
+      logDebugN $ "Writing: " <> showt destination
+      tryIO (Text.writeFile destination contents)
+
+tryIO :: MonadIO m => IO a -> m (Either CompilationError a)
+tryIO = liftIO . fmap (first asIOError) . try
+  where
+    asIOError :: IOException -> CompilationError
+    asIOError = IOError . showt
+
+newtype RPCResponse =
   RPCResponse Text
   deriving (Show, Eq, Generic, ToJSON)
