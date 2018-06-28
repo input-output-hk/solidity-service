@@ -15,12 +15,11 @@ module Webserver
   ( app
   ) where
 
-import Compilation (CompilationError, compileSol2IELEAsm)
+import Compilation (CompilationError, compile)
 import Control.Monad.Except (throwError)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Logger (runStderrLoggingT)
 import Data.Aeson (encode)
-import Data.Bifunctor (bimap)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
 import Data.Time.Calendar ()
@@ -41,12 +40,10 @@ server = version :<|> rpcHandler
 
 rpcHandler :: RPCCall -> Handler RPCResponse
 rpcHandler (RPCCallSol2IELEAsm sol2IELEAsm) = do
-  result <-
-    liftIO $
-    runStderrLoggingT (bimap id RPCResponse <$> compileSol2IELEAsm sol2IELEAsm)
+  result <- liftIO . runStderrLoggingT $ compile sol2IELEAsm
   case result of
     Left errs -> throwError $ toServantError errs
-    Right response -> pure response
+    Right response -> pure $ RPCResponse response
 
 toServantError :: [CompilationError] -> ServantErr
 toServantError errs = err500 {errBody = encode errs}

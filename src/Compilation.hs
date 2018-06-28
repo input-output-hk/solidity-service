@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -5,7 +6,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Compilation
-  ( compileSol2IELEAsm
+  ( compile
   , Sol2IELEAsm
   , CompilationError
   , files
@@ -15,10 +16,10 @@ module Compilation
 import Control.Exception (IOException, try)
 import Control.Lens (makeLenses)
 import Control.Monad.Catch (MonadMask)
+import Control.Monad.Except (MonadError, runExceptT, throwError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger (MonadLogger, logDebugN, logErrorN)
 import Data.Aeson (FromJSON, ToJSON, parseJSON, withArray)
-import Data.Bifunctor (first)
 import Data.Either (lefts)
 import qualified Data.Map as Map
 import Data.Map.Strict (Map)
@@ -60,21 +61,24 @@ data CompilationError
   | IOError Text
   deriving (Show, Eq, Generic, ToJSON)
 
-compileSol2IELEAsm ::
+compile ::
      (MonadIO m, MonadLogger m, MonadMask m)
   => Sol2IELEAsm
   -> m (Either [CompilationError] Text)
-compileSol2IELEAsm Sol2IELEAsm {..} =
+compile Sol2IELEAsm {..} =
   case toSafePath _mainFilename of
     Nothing -> pure $ Left [InvalidInputPath _mainFilename]
     Just file ->
       withSystemTempDirectory
         "solidity"
         (\tempDir -> do
-           r <-
+           tempfileErrors <-
              lefts <$>
-             traverse (uncurry (writeTempFile tempDir)) (Map.toList _files)
-           case r of
+             traverse
+               (\(filename, contents) ->
+                  runExceptT (writeTempFile tempDir filename contents))
+               (Map.toList _files)
+           case tempfileErrors of
              [] -> do
                let output = tempDir </> file
                (compilationResult, stdout, stderr) <-
@@ -98,21 +102,25 @@ compileSol2IELEAsm Sol2IELEAsm {..} =
     logAnyErrors result = pure result
 
 writeTempFile ::
-     (MonadIO m, MonadLogger m)
+     (MonadError CompilationError m, MonadIO m, MonadLogger m)
   => FilePath
   -> TaintedPath
   -> Text
-  -> m (Either CompilationError ())
+  -> m ()
 writeTempFile tempDir taintedFilename contents =
   case toSafePath taintedFilename of
-    Nothing -> pure $ Left $ InvalidInputPath taintedFilename
+    Nothing -> throwError $ InvalidInputPath taintedFilename
     Just file -> do
       let destination = tempDir </> file
       logDebugN $ "Writing: " <> showt destination
       tryIO (Text.writeFile destination contents)
 
-tryIO :: MonadIO m => IO a -> m (Either CompilationError a)
-tryIO = liftIO . fmap (first asIOError) . try
-  where
-    asIOError :: IOException -> CompilationError
-    asIOError = IOError . showt
+tryIO :: (MonadError CompilationError m, MonadIO m) => IO a -> m a
+tryIO action = do
+  result <- liftIO $ try action
+  case result of
+    Left err -> throwError $ fromIOException err
+    Right success -> pure success
+
+fromIOException :: IOException -> CompilationError
+fromIOException = IOError . showt
