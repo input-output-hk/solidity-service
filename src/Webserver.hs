@@ -31,17 +31,13 @@ import Servant ((:<|>)((:<|>)), ServantErr, err500, errBody, serve)
 import Servant.Server (Handler, Server)
 import System.Directory ()
 import Webserver.API (API)
-import Webserver.Types
-  ( RPCCall(RPCCallSol2IELEAsm)
-  , RPCResponse(RPCResponse)
-  , Status(Good)
-  )
+import Webserver.Types (RPCCall(RPCCallSol2IELEAsm), RPCResponse(RPCResponse))
 
 api :: Proxy API
 api = Proxy
 
 server :: Server API
-server = healthcheck :<|> version :<|> rpcHandler
+server = version :<|> rpcHandler
 
 rpcHandler :: RPCCall -> Handler RPCResponse
 rpcHandler (RPCCallSol2IELEAsm sol2IELEAsm) = do
@@ -54,9 +50,6 @@ rpcHandler (RPCCallSol2IELEAsm sol2IELEAsm) = do
 
 toServantError :: [CompilationError] -> ServantErr
 toServantError errs = err500 {errBody = encode errs}
-
-healthcheck :: Applicative m => m Status
-healthcheck = pure Good
 
 version :: Applicative m => m Text
 version = pure $(gitHash)

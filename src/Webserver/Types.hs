@@ -12,30 +12,11 @@
 module Webserver.Types where
 
 import Compilation (Sol2IELEAsm)
-import Control.Lens ( makePrisms)
-import Data.Aeson
-  ( FromJSON
-  , ToJSON
-  , Value(String)
-  , (.:)
-  , object
-  , parseJSON
-  , toJSON
-  , withObject
-  )
+import Control.Lens (makePrisms)
+import Data.Aeson (FromJSON, ToJSON, (.:), parseJSON, withObject)
 import Data.Text (Text)
-import Data.Text.Extra (showt)
 import GHC.Generics (Generic)
 
-data Status
-  = Good
-  | Bad
-  deriving (Show, Eq, Generic)
-
-instance ToJSON Status where
-  toJSON x = object [("status", String (showt x))]
-
-------------------------------------------------------------
 newtype RPCCall =
   RPCCallSol2IELEAsm Sol2IELEAsm
   deriving (Show, Eq, Generic)

@@ -9,11 +9,9 @@ module Webserver.API
 
 import Data.Text (Text)
 import Servant (Post, ReqBody, (:<|>), (:>), Get, JSON, PlainText)
-import Webserver.Types (RPCResponse, RPCCall, Status)
+import Webserver.Types (RPCResponse, RPCCall)
 
 type API =
-  "healthcheck" :> Get '[ JSON] Status
-  :<|>
   "version" :> Get '[ PlainText] Text
   :<|>
   ReqBody '[JSON] RPCCall :> Post '[JSON] RPCResponse
