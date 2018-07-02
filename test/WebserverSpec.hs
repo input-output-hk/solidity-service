@@ -2,7 +2,6 @@
 
 module WebserverSpec where
 
-import Test.HUnit ()
 import Test.Hspec (Spec, describe, it, shouldBe)
 
 spec :: Spec

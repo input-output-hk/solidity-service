@@ -5,7 +5,6 @@ module Webserver.TypesSpec where
 
 import Control.Lens ((^..), (^?), _Right, asIndex, ifolded)
 import Data.Aeson (eitherDecode')
-import Data.Aeson.Lens ()
 import qualified Data.ByteString.Lazy as LBS
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Webserver.Types (RPCCall, _RPCCallSol2IELEAsm)
