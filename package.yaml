@@ -22,30 +22,31 @@ dependencies:
 - base
 - bytestring
 - containers
-- unordered-containers
+- data-default-class
 - directory
-- system-filepath
+- exceptions
 - filepath
+- gitrev
 - http-media
 - lens
-- process
 - lens-aeson
+- monad-logger
 - mtl
-- temporary
+- natural-transformation
+- optparse-applicative
+- process
 - servant
 - servant-server
-- exceptions
+- system-filepath
+- temporary
 - text
 - time
 - transformers
+- unordered-containers
 - vector
 - wai
 - wai-extra
-- data-default-class
 - warp
-- optparse-applicative
-- gitrev
-- monad-logger
 
 ghc-options:
 - -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-import-lists

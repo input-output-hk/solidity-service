@@ -20,6 +20,7 @@ import Network.Wai.Middleware.Gzip (gzip)
 import Network.Wai.Middleware.RequestLogger (logStdout)
 import Options.Applicative
   ( Parser
+  , argument
   , auto
   , customExecParser
   , disambiguate
@@ -29,10 +30,12 @@ import Options.Applicative
   , info
   , infoOption
   , long
+  , metavar
   , option
   , prefs
   , short
   , showDefault
+  , str
   , strOption
   , value
   )
@@ -41,6 +44,7 @@ import qualified Webserver
 data Command =
   Run HostPreference
       Int
+      FilePath
   deriving (Show, Eq)
 
 versionOption :: Parser (a -> a)
@@ -56,12 +60,13 @@ commandParser =
   option
     auto
     (short 'p' <> long "port" <> help "Webserver port number" <> showDefault <>
-     value 8080)
+     value 8080) <*>
+  argument str (metavar "STATIC_DIR" <> help "Static directory to serve up")
 
 runCommand :: (MonadIO m, MonadLogger m) => Command -> m ()
-runCommand (Run host port) = do
+runCommand (Run host port staticDir) = do
   logInfoN $ Text.pack $ "Running on " <> show host <> ":" <> show port
-  liftIO $ runSettings settings (middleware Webserver.app)
+  liftIO $ runSettings settings (middleware (Webserver.app staticDir))
   where
     settings = setHost host $ setPort port $ defaultSettings
     middleware = gzip def . logStdout

@@ -5,13 +5,19 @@
 -- | can avoid autoformatting.
 module Webserver.API
   ( API
+  , Web
   ) where
 
 import Data.Text (Text)
-import Servant (Post, ReqBody, (:<|>), (:>), Get, JSON, PlainText)
+import Servant (Raw, Post, ReqBody, (:<|>), (:>), Get, JSON, PlainText)
 import Webserver.Types (RPCResponse, RPCCall)
 
-type API =
+type Web =
   "version" :> Get '[ PlainText] Text
   :<|>
+  "api" :> API
+  :<|>
+  Raw
+
+type API =
   ReqBody '[JSON] RPCCall :> Post '[JSON] RPCResponse
