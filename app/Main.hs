@@ -5,7 +5,6 @@ module Main where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger (MonadLogger, logInfoN, runStderrLoggingT)
-import Data.Default.Class (def)
 import Data.Monoid ((<>))
 import qualified Data.Text as Text
 import Development.GitRev (gitHash)
@@ -16,8 +15,6 @@ import Network.Wai.Handler.Warp
   , setHost
   , setPort
   )
-import Network.Wai.Middleware.Gzip (gzip)
-import Network.Wai.Middleware.RequestLogger (logStdout)
 import Options.Applicative
   ( Parser
   , argument
@@ -66,10 +63,9 @@ commandParser =
 runCommand :: (MonadIO m, MonadLogger m) => Command -> m ()
 runCommand (Run host port staticDir) = do
   logInfoN $ Text.pack $ "Running on " <> show host <> ":" <> show port
-  liftIO $ runSettings settings (middleware (Webserver.app staticDir))
+  liftIO . runSettings settings $ Webserver.app staticDir
   where
     settings = setHost host $ setPort port $ defaultSettings
-    middleware = gzip def . logStdout
 
 main :: IO ()
 main = do

@@ -20,10 +20,14 @@ import Control.Monad.Except (throwError)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Logger (runStderrLoggingT)
 import Data.Aeson (encode)
+import Data.Default.Class (def)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
 import Development.GitRev (gitHash)
 import Network.Wai (Application)
+import Network.Wai.Middleware.Cors (simpleCors)
+import Network.Wai.Middleware.Gzip (gzip)
+import Network.Wai.Middleware.RequestLogger (logStdout)
 import Servant
   ( (:<|>)((:<|>))
   , ServantErr
@@ -61,4 +65,6 @@ toServantError :: Maybe RPCID -> [CompilationError] -> ServantErr
 toServantError rpcID errs = err500 {errBody = encode (RPCError rpcID errs)}
 
 app :: FilePath -> Application
-app staticDir = serve api (server staticDir)
+app staticDir = middleware $ serve api (server staticDir)
+  where
+    middleware = gzip def . logStdout . simpleCors

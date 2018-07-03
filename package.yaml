@@ -45,6 +45,7 @@ dependencies:
 - unordered-containers
 - vector
 - wai
+- wai-cors
 - wai-extra
 - warp
 
