@@ -35,7 +35,7 @@ import Servant
 import Servant.Server (Handler, Server)
 import Webserver.API (Web)
 import Webserver.Types
-  ( RPCCall(RPCCallSol2IELEAsm)
+  ( RPCCall(RPCCallCompile)
   , RPCID
   , RPCResponse(RPCError, RPCSuccess)
   )
@@ -51,13 +51,13 @@ version :: Applicative m => m Text
 version = pure $(gitHash)
 
 rpcHandler :: RPCCall -> Handler RPCResponse
-rpcHandler (RPCCallSol2IELEAsm rpcID sol2IELEAsm) = do
-  result <- liftIO . runStderrLoggingT $ compile sol2IELEAsm
+rpcHandler (RPCCallCompile rpcID compilation) = do
+  result <- liftIO . runStderrLoggingT $ compile compilation
   case result of
     Left errs -> throwError $ toServantError rpcID errs
     Right response -> pure $ RPCSuccess rpcID response
 
-toServantError :: RPCID -> [CompilationError] -> ServantErr
+toServantError :: Maybe RPCID -> [CompilationError] -> ServantErr
 toServantError rpcID errs = err500 {errBody = encode (RPCError rpcID errs)}
 
 app :: FilePath -> Application

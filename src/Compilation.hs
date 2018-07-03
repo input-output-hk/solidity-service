@@ -7,9 +7,11 @@
 
 module Compilation
   ( compile
-  , Sol2IELEAsm
+  , Compilation(..)
+  , Compiler(..)
   , CompilationError
   , files
+  , compiler
   , mainFilename
   ) where
 
@@ -19,7 +21,7 @@ import Control.Monad.Catch (MonadMask)
 import Control.Monad.Except (MonadError, runExceptT, throwError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger (MonadLogger, logDebugN, logErrorN)
-import Data.Aeson (FromJSON, ToJSON, parseJSON, withArray)
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Either (lefts)
 import qualified Data.Map as Map
 import Data.Map.Strict (Map)
@@ -28,31 +30,27 @@ import qualified Data.Text as Text
 import Data.Text (Text)
 import Data.Text.Extra (showt)
 import qualified Data.Text.IO as Text
-import qualified Data.Vector as Vector
 import GHC.Generics (Generic)
 import PathUtils (TaintedPath, toSafePath)
+import System.Directory (createDirectoryIfMissing)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
-import System.FilePath.Posix ((</>))
+import System.FilePath.Posix ((</>), takeDirectory)
 import System.IO.Temp (withSystemTempDirectory)
-import System.Process (proc, readCreateProcessWithExitCode)
+import System.Process (CreateProcess, proc, readCreateProcessWithExitCode)
 
-data Sol2IELEAsm = Sol2IELEAsm
+data Compilation = Compilation
   { _mainFilename :: !TaintedPath
+  , _compiler :: !Compiler
   , _files :: Map TaintedPath Text
   } deriving (Show, Eq, Generic)
 
-instance FromJSON Sol2IELEAsm where
-  parseJSON =
-    withArray "params" $ \xs -> do
-      params <- traverse parseJSON (Vector.toList xs)
-      case params of
-        [x, y] -> do
-          _mainFilename <- parseJSON x
-          _files <- parseJSON y
-          pure Sol2IELEAsm {..}
-        _ -> fail "Invalid payload."
+data Compiler
+  = SolidityIELEASM
+  | SolidityIELEABI
+  | IELEASM
+  deriving (Show, Eq, Generic, ToJSON, FromJSON)
 
-makeLenses ''Sol2IELEAsm
+makeLenses ''Compilation
 
 data CompilationError
   = InvalidInputPath TaintedPath
@@ -63,9 +61,9 @@ data CompilationError
 
 compile ::
      (MonadIO m, MonadLogger m, MonadMask m)
-  => Sol2IELEAsm
+  => Compilation
   -> m (Either [CompilationError] Text)
-compile Sol2IELEAsm {..} =
+compile Compilation {..} =
   case toSafePath _mainFilename of
     Nothing -> pure $ Left [InvalidInputPath _mainFilename]
     Just file ->
@@ -85,7 +83,7 @@ compile Sol2IELEAsm {..} =
                  do logDebugN $ "Compiling: " <> showt output
                     liftIO $
                       readCreateProcessWithExitCode
-                        (proc "solc" ["--asm", output])
+                        (processForCompiler _compiler output)
                         ""
                case compilationResult of
                  ExitSuccess -> do
@@ -101,6 +99,14 @@ compile Sol2IELEAsm {..} =
       pure result
     logAnyErrors result = pure result
 
+processForCompiler :: Compiler -> FilePath -> CreateProcess
+processForCompiler SolidityIELEASM outputFilename =
+  proc "solc" ["--asm", outputFilename]
+processForCompiler SolidityIELEABI outputFilename =
+  proc "solc" ["--abi", outputFilename]
+processForCompiler IELEASM outputFilename =
+  proc "iele-assemble" [outputFilename]
+
 writeTempFile ::
      (MonadError CompilationError m, MonadIO m, MonadLogger m)
   => FilePath
@@ -112,8 +118,11 @@ writeTempFile tempDir taintedFilename contents =
     Nothing -> throwError $ InvalidInputPath taintedFilename
     Just file -> do
       let destination = tempDir </> file
+      let dir = takeDirectory destination
+      logDebugN $ "Creating: " <> showt dir
+      tryIO $ createDirectoryIfMissing True dir
       logDebugN $ "Writing: " <> showt destination
-      tryIO (Text.writeFile destination contents)
+      tryIO $ Text.writeFile destination contents
 
 tryIO :: (MonadError CompilationError m, MonadIO m) => IO a -> m a
 tryIO action = do

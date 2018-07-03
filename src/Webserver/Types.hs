@@ -10,52 +10,66 @@
 
 module Webserver.Types where
 
-import Compilation (CompilationError, Sol2IELEAsm)
+import Compilation
+  ( Compilation(Compilation, _compiler, _files, _mainFilename)
+  , CompilationError
+  , Compiler(IELEASM, SolidityIELEABI, SolidityIELEASM)
+  )
 import Control.Lens (makeLenses, makePrisms)
 import Data.Aeson
   ( FromJSON
   , ToJSON
   , Value(String)
   , (.:)
+  , (.:?)
   , object
   , parseJSON
   , toJSON
   , withObject
   )
+import Data.Monoid ((<>))
 import Data.Text (Text)
+import qualified Data.Vector as Vector
 import GHC.Generics (Generic)
 
 newtype RPCID =
   RPCID Integer
   deriving (Show, Eq, ToJSON, FromJSON, Generic)
 
-data RPCCall = RPCCallSol2IELEAsm
-  { _rpcCallId :: !RPCID
-  , _instructions :: !Sol2IELEAsm
+data RPCCall = RPCCallCompile
+  { _rpcCallId :: !(Maybe RPCID)
+  , _instructions :: !Compilation
   } deriving (Show, Eq, Generic)
 
 instance FromJSON RPCCall where
   parseJSON =
     withObject "RPCCall" $ \obj -> do
-      rpcId <- obj .: "id"
-      method :: Text <- obj .: "method"
-      version :: Text <- obj .: "jsonrpc"
-      params <- obj .: "params"
-      decodeParams rpcId method version params
-    where
-      decodeParams rpcId "sol2iele_asm" "2.0" params =
-        RPCCallSol2IELEAsm rpcId <$> parseJSON params
-            -- elif method == "sol2iele_asm" or method == "sol2iele_abi":
-      decodeParams _ _ _ _ = fail "method/version not recognised."
+      _rpcCallId <- obj .:? "id"
+      method <- obj .: "method"
+      _compiler <-
+        case method of
+          "sol2iele_asm" -> pure SolidityIELEASM
+          "sol2iele_abi" -> pure SolidityIELEABI
+          "iele_asm" -> pure IELEASM
+          _ -> fail $ "method not recognised: " <> method
+      params <- traverse parseJSON =<< Vector.toList <$> obj .: "params"
+      _instructions <-
+        case params of
+          [x, y] -> do
+            _mainFilename <- parseJSON x
+            _files <- parseJSON y
+            pure Compilation {..}
+          _ -> fail "Invalid payload."
+      pure RPCCallCompile {..}
 
 makePrisms ''RPCCall
 
 makeLenses ''RPCCall
 
 data RPCResponse
-  = RPCSuccess { _rpcResponseId :: !RPCID
+  = RPCSuccess { _rpcResponseId :: !(Maybe RPCID)
                , _responseBody :: !Text }
-  | RPCError { _rpcId :: !RPCID
+  | RPCError { _rpcId :: !(Maybe RPCID)
              , _compilationErrors :: ![CompilationError] }
   deriving (Show, Eq, Generic)
 
@@ -66,6 +80,11 @@ instance ToJSON RPCResponse where
   toJSON (RPCError rpcId errors) =
     object
       [ ("jsonrpc", String "2.0")
-      , ("errors", toJSON errors)
       , ("id", toJSON rpcId)
+      , ( "error"
+        , object
+            [ ("code", "-32605")
+            , ("message", "Compilation errors")
+            , ("data", toJSON errors)
+            ])
       ]
