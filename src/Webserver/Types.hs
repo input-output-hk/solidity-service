@@ -26,6 +26,7 @@ import Data.Aeson
   , toJSON
   , withObject
   )
+import Data.Aeson.Types (Parser)
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import qualified Data.Vector as Vector
@@ -35,22 +36,16 @@ newtype RPCID =
   RPCID Integer
   deriving (Show, Eq, ToJSON, FromJSON, Generic)
 
-data RPCCall = RPCCallCompile
-  { _rpcCallId :: !(Maybe RPCID)
+data RPCRequest = RPCRequestCompile
+  { _rpcRequestId :: !(Maybe RPCID)
   , _instructions :: !Compilation
   } deriving (Show, Eq, Generic)
 
-instance FromJSON RPCCall where
+instance FromJSON RPCRequest where
   parseJSON =
-    withObject "RPCCall" $ \obj -> do
-      _rpcCallId <- obj .:? "id"
-      method <- obj .: "method"
-      _compiler <-
-        case method of
-          "sol2iele_asm" -> pure SolidityIELEASM
-          "sol2iele_abi" -> pure SolidityIELEABI
-          "iele_asm" -> pure IELEASM
-          _ -> fail $ "method not recognised: " <> method
+    withObject "RPCRequest" $ \obj -> do
+      _rpcRequestId <- obj .:? "id"
+      _compiler <- parseCompiler =<< obj .: "method"
       params <- traverse parseJSON =<< Vector.toList <$> obj .: "params"
       _instructions <-
         case params of
@@ -59,11 +54,19 @@ instance FromJSON RPCCall where
             _files <- parseJSON y
             pure Compilation {..}
           _ -> fail "Invalid payload."
-      pure RPCCallCompile {..}
+      pure RPCRequestCompile {..}
+    where
+      parseCompiler :: String -> Parser Compiler
+      parseCompiler method =
+        case method of
+          "sol2iele_asm" -> pure SolidityIELEASM
+          "sol2iele_abi" -> pure SolidityIELEABI
+          "iele_asm" -> pure IELEASM
+          _ -> fail $ "method not recognised: " <> method
 
-makePrisms ''RPCCall
+makePrisms ''RPCRequest
 
-makeLenses ''RPCCall
+makeLenses ''RPCRequest
 
 data RPCResponse
   = RPCSuccess { _rpcResponseId :: !(Maybe RPCID)

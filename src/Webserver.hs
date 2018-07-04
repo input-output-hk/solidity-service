@@ -39,8 +39,8 @@ import Servant
 import Servant.Server (Handler, Server)
 import Webserver.API (Web)
 import Webserver.Types
-  ( RPCCall(RPCCallCompile)
-  , RPCID
+  ( RPCID
+  , RPCRequest(RPCRequestCompile)
   , RPCResponse(RPCError, RPCSuccess)
   )
 
@@ -54,8 +54,8 @@ server staticDir =
 version :: Applicative m => m Text
 version = pure $(gitHash)
 
-rpcHandler :: RPCCall -> Handler RPCResponse
-rpcHandler (RPCCallCompile rpcID compilation) = do
+rpcHandler :: RPCRequest -> Handler RPCResponse
+rpcHandler (RPCRequestCompile rpcID compilation) = do
   result <- liftIO . runStderrLoggingT $ compile compilation
   case result of
     Left err -> throwError $ toServantError rpcID err

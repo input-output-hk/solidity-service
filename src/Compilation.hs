@@ -22,7 +22,7 @@ import Control.Monad.Catch (MonadMask)
 import Control.Monad.Except (MonadError, runExceptT, throwError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger (MonadLogger, logDebugN, logErrorN)
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson (ToJSON)
 import Data.Foldable (traverse_)
 import qualified Data.Map as Map
 import Data.Map.Strict (Map)
@@ -49,7 +49,7 @@ data Compiler
   = SolidityIELEASM
   | SolidityIELEABI
   | IELEASM
-  deriving (Show, Eq, Generic, ToJSON, FromJSON)
+  deriving (Show, Eq, Generic)
 
 makeLenses ''Compilation
 

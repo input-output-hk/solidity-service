@@ -10,7 +10,7 @@ module Webserver.API
 
 import Data.Text (Text)
 import Servant (Raw, Post, ReqBody, (:<|>), (:>), Get, JSON, PlainText)
-import Webserver.Types (RPCResponse, RPCCall)
+import Webserver.Types (RPCResponse, RPCRequest)
 
 type Web =
   "version" :> Get '[ PlainText] Text
@@ -20,4 +20,4 @@ type Web =
   Raw
 
 type API =
-  ReqBody '[JSON] RPCCall :> Post '[JSON] RPCResponse
+  ReqBody '[JSON] RPCRequest :> Post '[JSON] RPCResponse
