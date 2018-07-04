@@ -10,7 +10,7 @@ module Compilation
   ( compile
   , Compilation(..)
   , Compiler(..)
-  , CompilationError
+  , CompilationError(..)
   , files
   , compiler
   , mainFilename
