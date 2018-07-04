@@ -62,10 +62,10 @@ commandParser =
 
 runCommand :: (MonadIO m, MonadLogger m) => Command -> m ()
 runCommand (Run host port staticDir) = do
-  logInfoN $ Text.pack $ "Running on " <> show host <> ":" <> show port
+  logInfoN . Text.pack $ "Running on " <> show host <> ":" <> show port
   liftIO . runSettings settings $ Webserver.app staticDir
   where
-    settings = setHost host $ setPort port $ defaultSettings
+    settings = setHost host . setPort port $ defaultSettings
 
 main :: IO ()
 main = do
