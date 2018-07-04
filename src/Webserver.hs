@@ -58,11 +58,11 @@ rpcHandler :: RPCCall -> Handler RPCResponse
 rpcHandler (RPCCallCompile rpcID compilation) = do
   result <- liftIO . runStderrLoggingT $ compile compilation
   case result of
-    Left errs -> throwError $ toServantError rpcID errs
+    Left err -> throwError $ toServantError rpcID err
     Right response -> pure $ RPCSuccess rpcID response
 
-toServantError :: Maybe RPCID -> [CompilationError] -> ServantErr
-toServantError rpcID errs = err500 {errBody = encode (RPCError rpcID errs)}
+toServantError :: Maybe RPCID -> CompilationError -> ServantErr
+toServantError rpcID err = err500 {errBody = encode (RPCError rpcID err)}
 
 app :: FilePath -> Application
 app staticDir = middleware $ serve api (server staticDir)

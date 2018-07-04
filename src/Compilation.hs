@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -22,7 +23,7 @@ import Control.Monad.Except (MonadError, runExceptT, throwError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger (MonadLogger, logDebugN, logErrorN)
 import Data.Aeson (FromJSON, ToJSON)
-import Data.Either (lefts)
+import Data.Foldable (traverse_)
 import qualified Data.Map as Map
 import Data.Map.Strict (Map)
 import Data.Monoid ((<>))
@@ -62,42 +63,44 @@ data CompilationError
 compile ::
      (MonadIO m, MonadLogger m, MonadMask m)
   => Compilation
-  -> m (Either [CompilationError] Text)
+  -> m (Either CompilationError Text)
 compile Compilation {..} =
   case toSafePath _mainFilename of
-    Nothing -> pure $ Left [InvalidInputPath _mainFilename]
+    Nothing -> pure . Left $ InvalidInputPath _mainFilename
     Just file ->
       withSystemTempDirectory
         "solidity"
-        (\tempDir -> do
-           tempfileErrors <-
-             lefts <$>
-             traverse
-               (\(filename, contents) ->
-                  runExceptT (writeTempFile tempDir filename contents))
-               (Map.toList _files)
-           case tempfileErrors of
-             [] -> do
-               let output = tempDir </> file
-               (compilationResult, stdout, stderr) <-
-                 do logDebugN $ "Compiling: " <> showt output
-                    liftIO $
-                      readCreateProcessWithExitCode
-                        (processForCompiler _compiler output)
-                        ""
-               case compilationResult of
-                 ExitSuccess -> do
-                   logDebugN $ "Compiled: " <> showt output
-                   pure . Right . Text.pack $ stdout
-                 ExitFailure code ->
-                   pure $ Left [CompilationFailed code (Text.pack stderr)]
-             errors -> pure $ Left errors) >>=
+        (\tempDir ->
+           runExceptT $ do
+             traverse_ (uncurry (writeTempFile tempDir)) (Map.toList _files)
+             finalCompileStep tempDir file _compiler) >>=
       logAnyErrors
   where
     logAnyErrors result@(Left errors) = do
       logErrorN $ "Compilation failed: " <> showt errors
       pure result
     logAnyErrors result = pure result
+
+finalCompileStep ::
+     (MonadLogger m, MonadIO m, MonadError CompilationError m)
+  => FilePath
+  -> FilePath
+  -> Compiler
+  -> m Text
+finalCompileStep srcDir file compilerType = do
+  let output = srcDir </> file
+  (compilationResult, stdout, stderr) <-
+    do logDebugN $ "Compiling: " <> showt output
+       liftIO $
+         readCreateProcessWithExitCode
+           (processForCompiler compilerType output)
+           ""
+  case compilationResult of
+    ExitFailure code -> throwError $ CompilationFailed code (Text.pack stderr)
+    ExitSuccess -> do
+      logDebugN $ "Compiled: " <> showt output
+      -- | TODO Strip directory name from output?
+      pure . Text.pack $ stdout
 
 processForCompiler :: Compiler -> FilePath -> CreateProcess
 processForCompiler SolidityIELEASM outputFilename =

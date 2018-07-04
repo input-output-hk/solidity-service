@@ -70,21 +70,21 @@ data RPCResponse
   = RPCSuccess { _rpcResponseId :: !(Maybe RPCID)
                , _responseBody :: !Text }
   | RPCError { _rpcId :: !(Maybe RPCID)
-             , _compilationErrors :: ![CompilationError] }
+             , _compilationError :: !CompilationError }
   deriving (Show, Eq, Generic)
 
 instance ToJSON RPCResponse where
   toJSON (RPCSuccess rpcId text) =
     object
       [("jsonrpc", String "2.0"), ("result", String text), ("id", toJSON rpcId)]
-  toJSON (RPCError rpcId errors) =
+  toJSON (RPCError rpcId err) =
     object
       [ ("jsonrpc", String "2.0")
       , ("id", toJSON rpcId)
       , ( "error"
         , object
             [ ("code", "-32605")
-            , ("message", "Compilation errors")
-            , ("data", toJSON errors)
+            , ("message", "Compilation error.")
+            , ("data", toJSON err)
             ])
       ]
