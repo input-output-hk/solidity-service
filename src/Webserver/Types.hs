@@ -12,7 +12,7 @@ module Webserver.Types where
 
 import Compilation
   ( Compilation(Compilation, _compiler, _files, _mainFilename)
-  , CompilationError(CompilationFailed, IOError, InvalidInputPath)
+  , CompilationError(IOError, InvalidInputPath)
   , Compiler(IELEASM, SolidityIELEABI, SolidityIELEASM)
   )
 import Control.Lens (makeLenses, makePrisms)
@@ -86,8 +86,7 @@ instance ToJSON RPCResponse where
             [ ( "code"
               , case err of
                   InvalidInputPath _ -> "-32602"
-                  IOError _ -> "-32603"
-                  CompilationFailed _ _ -> "-32600")
+                  IOError _ -> "-32603")
             , ("message", "Compilation error.")
             , ("data", toJSON err)
             ])
