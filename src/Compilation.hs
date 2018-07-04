@@ -104,9 +104,9 @@ finalCompileStep srcDir file compilerType = do
 
 processForCompiler :: Compiler -> FilePath -> CreateProcess
 processForCompiler SolidityIELEASM outputFilename =
-  proc "solc" ["--asm", outputFilename]
+  proc "isolc" ["--asm", outputFilename]
 processForCompiler SolidityIELEABI outputFilename =
-  proc "solc" ["--abi", outputFilename]
+  proc "isolc" ["--abi", outputFilename]
 processForCompiler IELEASM outputFilename =
   proc "iele-assemble" [outputFilename]
 
