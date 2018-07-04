@@ -19,7 +19,6 @@ import Control.Lens (makeLenses, makePrisms)
 import Data.Aeson
   ( FromJSON
   , ToJSON
-  , Value(String)
   , (.:)
   , (.:?)
   , object
@@ -70,16 +69,15 @@ data RPCResponse
   = RPCSuccess { _rpcResponseId :: !(Maybe RPCID)
                , _responseBody :: !Text }
   | RPCError { _rpcId :: !(Maybe RPCID)
-             , _compilationError :: !CompilationError }
+             , _error :: !CompilationError }
   deriving (Show, Eq, Generic)
 
 instance ToJSON RPCResponse where
   toJSON (RPCSuccess rpcId text) =
-    object
-      [("jsonrpc", String "2.0"), ("result", String text), ("id", toJSON rpcId)]
+    object [("jsonrpc", "2.0"), ("result", toJSON text), ("id", toJSON rpcId)]
   toJSON (RPCError rpcId err) =
     object
-      [ ("jsonrpc", String "2.0")
+      [ ("jsonrpc", "2.0")
       , ("id", toJSON rpcId)
       , ( "error"
         , object
