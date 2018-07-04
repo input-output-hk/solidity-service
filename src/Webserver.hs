@@ -24,7 +24,7 @@ import Data.Default.Class (def)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
 import Development.GitRev (gitHash)
-import Network.Wai (Application)
+import Network.Wai (Application, Middleware)
 import Network.Wai.Middleware.Cors (simpleCors)
 import Network.Wai.Middleware.Gzip (gzip)
 import Network.Wai.Middleware.RequestLogger (logStdout)
@@ -66,5 +66,6 @@ toServantError rpcID err = err500 {errBody = encode (RPCError rpcID err)}
 
 app :: FilePath -> Application
 app staticDir = middleware $ serve api (server staticDir)
-  where
-    middleware = gzip def . logStdout . simpleCors
+
+middleware :: Middleware
+middleware = gzip def . logStdout . simpleCors
