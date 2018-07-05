@@ -1,0 +1,160 @@
+-- This file has been generated from package.yaml by hpack version 0.27.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 3306f92d86e43ecdd363630a3954c0867561eb0d8573b87dc7821466127eb142
+
+name:           solidity-service
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/krisajenkins/solidity-service#readme>
+homepage:       https://github.com/krisajenkins/solidity-service#readme
+bug-reports:    https://github.com/krisajenkins/solidity-service/issues
+copyright:      2018 IOHK
+license:        AllRightsReserved
+build-type:     Simple
+cabal-version:  >= 1.10
+
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/krisajenkins/solidity-service
+
+library
+  exposed-modules:
+      Compilation
+      Data.Text.Extra
+      PathUtils
+      Webserver
+      Webserver.API
+      Webserver.Types
+  other-modules:
+      Paths_solidity_service
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-import-lists
+  build-depends:
+      aeson
+    , attoparsec
+    , base
+    , bytestring
+    , containers
+    , data-default-class
+    , directory
+    , exceptions
+    , filepath
+    , gitrev
+    , http-media
+    , lens
+    , lens-aeson
+    , monad-logger
+    , mtl
+    , natural-transformation
+    , optparse-applicative
+    , process
+    , servant
+    , servant-server
+    , system-filepath
+    , temporary
+    , text
+    , time
+    , transformers
+    , unordered-containers
+    , vector
+    , wai
+    , wai-cors
+    , wai-extra
+    , warp
+  default-language: Haskell2010
+
+executable solidity-service
+  main-is: Main.hs
+  other-modules:
+      Paths_solidity_service
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-import-lists -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , attoparsec
+    , base
+    , bytestring
+    , containers
+    , data-default-class
+    , directory
+    , exceptions
+    , filepath
+    , gitrev
+    , http-media
+    , lens
+    , lens-aeson
+    , monad-logger
+    , mtl
+    , natural-transformation
+    , optparse-applicative
+    , process
+    , servant
+    , servant-server
+    , solidity-service
+    , system-filepath
+    , temporary
+    , text
+    , time
+    , transformers
+    , unordered-containers
+    , vector
+    , wai
+    , wai-cors
+    , wai-extra
+    , warp
+  default-language: Haskell2010
+
+test-suite solidity-service-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      PathUtilsSpec
+      Webserver.TypesSpec
+      WebserverSpec
+      Paths_solidity_service
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-import-lists -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      HUnit
+    , aeson
+    , attoparsec
+    , base
+    , bytestring
+    , containers
+    , data-default-class
+    , directory
+    , exceptions
+    , filepath
+    , gitrev
+    , hspec
+    , hspec-core
+    , http-media
+    , lens
+    , lens-aeson
+    , monad-logger
+    , mtl
+    , natural-transformation
+    , optparse-applicative
+    , process
+    , servant
+    , servant-server
+    , solidity-service
+    , system-filepath
+    , temporary
+    , text
+    , time
+    , transformers
+    , unordered-containers
+    , vector
+    , wai
+    , wai-cors
+    , wai-extra
+    , warp
+  default-language: Haskell2010
