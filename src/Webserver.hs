@@ -44,9 +44,6 @@ import Webserver.Types
   , RPCResponse(RPCError, RPCSuccess)
   )
 
-api :: Proxy Web
-api = Proxy
-
 server :: FilePath -> Server Web
 server staticDir =
   version :<|> rpcHandler :<|> serveDirectoryFileServer staticDir
@@ -65,7 +62,7 @@ toServantError :: Maybe RPCID -> CompilationError -> ServantErr
 toServantError rpcID err = err500 {errBody = encode (RPCError rpcID err)}
 
 app :: FilePath -> Application
-app staticDir = middleware $ serve api (server staticDir)
+app staticDir = middleware $ serve (Proxy :: Proxy Web) (server staticDir)
 
 middleware :: Middleware
 middleware = gzip def . logStdout . simpleCors
