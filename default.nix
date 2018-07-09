@@ -33509,8 +33509,8 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
            ];
            doHaddock = false;
            doCheck = false;
-           homepage = "https://github.com/krisajenkins/solidity-service#readme";
-           license = stdenv.lib.licenses.bsd3;
+           homepage = "https://github.com/iohk/solidity-service#readme";
+           license = stdenv.lib.licenses.mit;
          }) {};
       "sort" = callPackage
         ({ mkDerivation, base, stdenv }:

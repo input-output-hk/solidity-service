@@ -10,7 +10,7 @@ description:    Please see the README on GitHub at <https://github.com/krisajenk
 homepage:       https://github.com/krisajenkins/solidity-service#readme
 bug-reports:    https://github.com/krisajenkins/solidity-service/issues
 copyright:      2018 IOHK
-license:        AllRightsReserved
+license:        MIT
 build-type:     Simple
 cabal-version:  >= 1.10
 
