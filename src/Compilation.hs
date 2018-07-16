@@ -96,7 +96,7 @@ finalCompileStep srcDir file compilerType = do
   let outputPath = srcDir </> file
   (compilationResult, stdout, stderr) <-
     do logDebugN $ "Compiling: " <> showt outputPath
-       liftIO $
+       tryIO $ liftIO $
          readCreateProcessWithExitCode
            (processForCompiler compilerType outputPath)
            ""
