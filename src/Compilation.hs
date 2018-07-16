@@ -74,8 +74,15 @@ compile Compilation {..} =
              finalCompileStep tempDir file _compiler) >>=
       logAnyErrors
   where
-    logAnyErrors result@(Left errors) = do
-      logErrorN $ "Compilation failed: " <> showt errors
+    logAnyErrors result@(Left err) = do
+      logErrorN $ "Compilation of '" <> showt _mainFilename <> "' failed: "
+      logErrorN $ "Error: " <> showt err
+      traverse_
+        (uncurry
+           (\name contents -> do
+              logErrorN $ "  " <> showt name <> ":"
+              logErrorN contents))
+        (Map.toList _files)
       pure result
     logAnyErrors result = pure result
 
