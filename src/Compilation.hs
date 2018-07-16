@@ -105,7 +105,7 @@ finalCompileStep srcDir file compilerType = do
         case compilationResult of
           ExitFailure _ -> stderr
           ExitSuccess -> stdout
-  logDebugN $ "Compiled: " <> output
+  logDebugN $ "Compiled: " <> output <> " " <> showt compilationResult
   pure output
 
 processForCompiler :: Compiler -> FilePath -> CreateProcess
