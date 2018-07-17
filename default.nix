@@ -4,6 +4,8 @@
 
 { pkgs ? (import <nixpkgs> {})
 , compiler ? pkgs.haskell.packages.ghc822
+, solidity
+, iele
 }:
 
 with pkgs.haskell.lib;
@@ -33479,7 +33481,7 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
       "solidity-service" = callPackage
         ({ mkDerivation, aeson, attoparsec, base, bytestring, containers
          , data-default-class, directory, exceptions, filepath, gitrev
-         , http-media, lens, lens-aeson, monad-logger, mtl
+         , hspec, http-media, lens, lens-aeson, monad-logger, mtl
          , natural-transformation, optparse-applicative, process, servant
          , servant-server, stdenv, system-filepath, temporary, text, time
          , transformers, unordered-containers, vector, wai, wai-cors
@@ -33493,7 +33495,7 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
            isExecutable = true;
            libraryHaskellDepends = [
              aeson attoparsec base bytestring containers data-default-class
-             directory exceptions filepath gitrev http-media lens lens-aeson
+             directory exceptions filepath gitrev http-media hspec lens lens-aeson
              monad-logger mtl natural-transformation optparse-applicative
              process servant servant-server system-filepath temporary text time
              transformers unordered-containers vector wai wai-cors wai-extra
@@ -33506,9 +33508,10 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
              process servant servant-server system-filepath temporary text time
              transformers unordered-containers vector wai wai-cors wai-extra
              warp
+             solidity iele
            ];
            doHaddock = false;
-           doCheck = false;
+           doCheck = true;
            homepage = "https://github.com/input-output-hk/solidity-service#readme";
            license = stdenv.lib.licenses.mit;
          }) {};
