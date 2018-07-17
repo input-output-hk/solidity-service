@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module PathUtils
-  ( TaintedPath
+  ( TaintedPath,mkTaintedPath
   , toSafePath
   ) where
 
@@ -22,6 +22,9 @@ newtype TaintedPath =
 
 instance IsString TaintedPath where
   fromString = TaintedPath
+
+mkTaintedPath :: FilePath -> TaintedPath
+mkTaintedPath = TaintedPath
 
 toSafePath :: TaintedPath -> Maybe FilePath
 toSafePath (TaintedPath userPath) =
