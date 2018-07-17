@@ -16,6 +16,7 @@ cabal-version:  >= 1.10
 
 extra-source-files:
     README.md
+    test/*.sol
 
 source-repository head
   type: git
@@ -116,7 +117,7 @@ test-suite solidity-service-test
   other-modules:
       PathUtilsSpec
       Webserver.TypesSpec
-      WebserverSpec
+      CompilationSpec
       Paths_solidity_service
   hs-source-dirs:
       test

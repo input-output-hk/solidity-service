@@ -15,11 +15,9 @@ module Webserver
   ( app
   ) where
 
-import Compilation (CompilationError, compile)
-import Control.Monad.Except (throwError)
+import Compilation (compile)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Logger (runStderrLoggingT)
-import Data.Aeson (encode)
 import Data.Default.Class (def)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
@@ -28,19 +26,11 @@ import Network.Wai (Application, Middleware)
 import Network.Wai.Middleware.Cors (simpleCors)
 import Network.Wai.Middleware.Gzip (gzip)
 import Network.Wai.Middleware.RequestLogger (logStdout)
-import Servant
-  ( (:<|>)((:<|>))
-  , ServantErr
-  , err500
-  , errBody
-  , serve
-  , serveDirectoryFileServer
-  )
+import Servant ((:<|>)((:<|>)), serve, serveDirectoryFileServer)
 import Servant.Server (Handler, Server)
 import Webserver.API (Web)
 import Webserver.Types
-  ( RPCID
-  , RPCRequest(RPCRequestCompile)
+  ( RPCRequest(RPCRequestCompile)
   , RPCResponse(RPCError, RPCSuccess)
   )
 
@@ -55,11 +45,8 @@ rpcHandler :: RPCRequest -> Handler RPCResponse
 rpcHandler (RPCRequestCompile rpcID compilation) = do
   result <- liftIO . runStderrLoggingT $ compile compilation
   case result of
-    Left err -> throwError $ toServantError rpcID err
+    Left err -> pure $ RPCError rpcID err
     Right response -> pure $ RPCSuccess rpcID response
-
-toServantError :: Maybe RPCID -> CompilationError -> ServantErr
-toServantError rpcID err = err500 {errBody = encode (RPCError rpcID err)}
 
 app :: FilePath -> Application
 app staticDir = middleware $ serve (Proxy :: Proxy Web) (server staticDir)

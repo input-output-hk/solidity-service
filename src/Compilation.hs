@@ -56,6 +56,9 @@ makeLenses ''Compilation
 data CompilationError
   = InvalidInputPath TaintedPath
   | IOError Text
+  | CompilationFailed Int
+                      String
+                      String
   deriving (Show, Eq, Generic, ToJSON)
 
 compile ::
@@ -96,17 +99,14 @@ finalCompileStep srcDir file compilerType = do
   let outputPath = srcDir </> file
   (compilationResult, stdout, stderr) <-
     do logDebugN $ "Compiling: " <> showt outputPath
-       tryIO $ liftIO $
+       liftIO $
          readCreateProcessWithExitCode
            (processForCompiler compilerType outputPath)
            ""
-  let output =
-        Text.replace (Text.pack srcDir) "" . Text.pack $
-        case compilationResult of
-          ExitFailure _ -> stderr
-          ExitSuccess -> stdout
-  logDebugN $ "Compiled: " <> output <> " " <> showt compilationResult
-  pure output
+  logDebugN $ "Compiled: " <> showt compilationResult
+  case compilationResult of
+    ExitFailure code -> throwError $ CompilationFailed code stdout stderr
+    ExitSuccess -> pure $ Text.replace (Text.pack srcDir) "" $ Text.pack stdout
 
 processForCompiler :: Compiler -> FilePath -> CreateProcess
 processForCompiler SolidityIELEASM outputFilename =
