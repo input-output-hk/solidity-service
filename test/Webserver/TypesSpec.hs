@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Webserver.TypesSpec where
+module Webserver.TypesSpec (spec) where
 
 import Compilation (files, mainFilename)
 import Control.Lens ((^..), (^?), _Right, asIndex, ifolded)
