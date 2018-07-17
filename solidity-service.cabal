@@ -17,6 +17,7 @@ cabal-version:  >= 1.10
 extra-source-files:
     README.md
     test/*.sol
+    test/Webserver/*.json
 
 source-repository head
   type: git
