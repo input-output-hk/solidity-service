@@ -33508,8 +33508,12 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
              process servant servant-server system-filepath temporary text time
              transformers unordered-containers vector wai wai-cors wai-extra
              warp
-             solidity iele
            ];
+           executableToolDepends = [ solidity iele pkgs.makeWrapper ];
+           testToolDepends = [ solidity iele ];
+           postInstall = ''
+             wrapProgram $out/bin/solidity-service --prefix PATH : ${pkgs.lib.makeBinPath [ solidity iele ]}
+           '';
            doHaddock = false;
            doCheck = true;
            homepage = "https://github.com/input-output-hk/solidity-service#readme";
