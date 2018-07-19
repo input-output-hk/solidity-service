@@ -78,6 +78,8 @@ data RPCResponse
 instance ToJSON RPCResponse where
   toJSON (RPCSuccess rpcId text) =
     object [("jsonrpc", "2.0"), ("result", toJSON text), ("id", toJSON rpcId)]
+  toJSON (RPCError rpcId (CompilationFailed _ _ text)) =
+    object [("jsonrpc", "2.0"), ("result", toJSON text), ("id", toJSON rpcId)]
   toJSON (RPCError rpcId err) =
     object
       [ ("jsonrpc", "2.0")
