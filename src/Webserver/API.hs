@@ -13,7 +13,7 @@ import Servant (Raw, Post, ReqBody, (:<|>), (:>), Get, JSON, PlainText)
 import Webserver.Types (RPCResponse, RPCRequest)
 
 type Web =
-  "version" :> Get '[ PlainText] Text
+  "version" :> Get '[PlainText, JSON] Text
   :<|>
   "api" :> API
   :<|>

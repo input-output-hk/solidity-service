@@ -48,6 +48,7 @@ library
     , filepath
     , gitrev
     , http-media
+    , http-types
     , lens
     , lens-aeson
     , monad-logger
@@ -56,7 +57,9 @@ library
     , optparse-applicative
     , process
     , servant
+    , servant-foreign
     , servant-server
+    , servant-options
     , system-filepath
     , temporary
     , text

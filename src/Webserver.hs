@@ -22,17 +22,23 @@ import Data.Default.Class (def)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
 import Development.GitRev (gitHash)
-import Network.Wai (Application, Middleware)
+import Network.HTTP.Types (Method)
+import Network.Wai (Application)
 import Network.Wai.Middleware.Cors (simpleCors)
 import Network.Wai.Middleware.Gzip (gzip)
 import Network.Wai.Middleware.RequestLogger (logStdout)
+import Network.Wai.Middleware.Servant.Options (provideOptions)
 import Servant ((:<|>)((:<|>)), serve, serveDirectoryFileServer)
+import Servant.Foreign (GenerateList, NoContent, Req, generateList)
 import Servant.Server (Handler, Server)
 import Webserver.API (Web)
 import Webserver.Types
   ( RPCRequest(RPCRequestCompile)
   , RPCResponse(RPCError, RPCSuccess)
   )
+
+instance GenerateList NoContent (Method -> Req NoContent) where
+  generateList _ = []
 
 server :: FilePath -> Server Web
 server staticDir =
@@ -49,7 +55,9 @@ rpcHandler (RPCRequestCompile rpcID compilation) = do
     Right response -> pure $ RPCSuccess rpcID response
 
 app :: FilePath -> Application
-app staticDir = middleware $ serve (Proxy :: Proxy Web) (server staticDir)
-
-middleware :: Middleware
-middleware = gzip def . logStdout . simpleCors
+app staticDir =
+  gzip def . logStdout . simpleCors . provideOptions webApi . serve webApi $
+  (server staticDir)
+  where
+    webApi :: Proxy Web
+    webApi = Proxy
