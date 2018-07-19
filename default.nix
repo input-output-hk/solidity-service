@@ -33530,7 +33530,7 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
            isExecutable = true;
            libraryHaskellDepends = [
              aeson attoparsec base bytestring containers data-default-class
-             directory exceptions filepath gitrev http-media http-types lens
+             directory exceptions filepath gitrev hspec hspec-core http-media http-types lens
              lens-aeson monad-logger mtl natural-transformation
              optparse-applicative process servant servant-foreign
              servant-options servant-server system-filepath temporary text time
