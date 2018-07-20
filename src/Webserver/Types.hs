@@ -89,7 +89,7 @@ instance ToJSON RPCResponse where
             [ ( "code"
               , case err of
                   InvalidInputPath _ -> "-32602"
-                  CompilationFailed _ _ _ -> "-32602"
+                  CompilationFailed {} -> "-32602"
                   IOError _ -> "-32603")
             , ("message", "Compilation error.")
             , ("data", toJSON err)

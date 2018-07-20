@@ -57,7 +57,7 @@ rpcHandler (RPCRequestCompile rpcID compilation) = do
 app :: FilePath -> Application
 app staticDir =
   gzip def . logStdout . simpleCors . provideOptions webApi . serve webApi $
-  (server staticDir)
+  server staticDir
   where
     webApi :: Proxy Web
     webApi = Proxy
