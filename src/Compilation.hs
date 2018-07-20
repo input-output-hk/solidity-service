@@ -106,7 +106,9 @@ finalCompileStep srcDir file compilerType = do
   logDebugN $ "Compiled: " <> showt compilationResult
   case compilationResult of
     ExitFailure code -> throwError $ CompilationFailed code stdout stderr
-    ExitSuccess -> pure $ Text.replace (Text.pack srcDir) "" $ Text.pack stdout
+    ExitSuccess -> pure $ stripSrcDir $ Text.pack stdout
+  where
+    stripSrcDir = Text.replace (Text.pack srcDir <> "/") ""
 
 processForCompiler :: Compiler -> FilePath -> CreateProcess
 processForCompiler SolidityIELEASM outputFilename =
