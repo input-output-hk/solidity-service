@@ -1,9 +1,3 @@
--- This file has been generated from package.yaml by hpack version 0.27.0.
---
--- see: https://github.com/sol/hpack
---
--- hash: 3306f92d86e43ecdd363630a3954c0867561eb0d8573b87dc7821466127eb142
-
 name:           solidity-service
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/input-output-hk/solidity-service#readme>
