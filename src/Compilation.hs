@@ -31,6 +31,7 @@ import qualified Data.Text as Text
 import Data.Text (Text)
 import Data.Text.Extra (showt)
 import qualified Data.Text.IO as Text
+import Data.Tuple.Extra (both)
 import GHC.Generics (Generic)
 import PathUtils (TaintedPath, toSafePath)
 import System.Directory (createDirectoryIfMissing)
@@ -57,8 +58,8 @@ data CompilationError
   = InvalidInputPath TaintedPath
   | IOError Text
   | CompilationFailed Int
-                      String
-                      String
+                      Text
+                      Text
   deriving (Show, Eq, Generic, ToJSON)
 
 compile ::
@@ -95,20 +96,21 @@ finalCompileStep ::
   -> FilePath
   -> Compiler
   -> m Text
-finalCompileStep srcDir file compilerType = do
-  let outputPath = srcDir </> file
+finalCompileStep tempDir file compilerType = do
+  let outputPath = tempDir </> file
   (compilationResult, stdout, stderr) <-
     do logDebugN $ "Compiling: " <> showt outputPath
        liftIO $
          readCreateProcessWithExitCode
            (processForCompiler compilerType outputPath)
            ""
+  let (out, err) = both (stripTempDir . Text.pack) (stdout, stderr)
   logDebugN $ "Compiled: " <> showt compilationResult
   case compilationResult of
-    ExitFailure code -> throwError $ CompilationFailed code stdout stderr
-    ExitSuccess -> pure $ stripSrcDir $ Text.pack stdout
+    ExitFailure code -> throwError $ CompilationFailed code out err
+    ExitSuccess -> pure out
   where
-    stripSrcDir = Text.replace (Text.pack srcDir <> "/") ""
+    stripTempDir = Text.replace (Text.pack (tempDir </> "")) ""
 
 processForCompiler :: Compiler -> FilePath -> CreateProcess
 processForCompiler SolidityIELEASM outputFilename =

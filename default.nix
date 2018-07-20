@@ -33515,7 +33515,7 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
          }) {};
       "solidity-service" = callPackage
         ({ mkDerivation, aeson, attoparsec, base, bytestring, containers
-         , data-default-class, directory, exceptions, filepath, gitrev
+         , data-default-class, directory, exceptions, extra, filepath, gitrev
          , http-media, http-types, hspec, hspec-core, lens, lens-aeson, monad-logger, mtl
          , natural-transformation, optparse-applicative, process, servant
          , servant-foreign, servant-options, servant-server, stdenv
@@ -33530,7 +33530,7 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
            isExecutable = true;
            libraryHaskellDepends = [
              aeson attoparsec base bytestring containers data-default-class
-             directory exceptions filepath gitrev hspec hspec-core http-media http-types lens
+             directory exceptions extra filepath gitrev hspec hspec-core http-media http-types lens
              lens-aeson monad-logger mtl natural-transformation
              optparse-applicative process servant servant-foreign
              servant-options servant-server system-filepath temporary text time
@@ -33539,7 +33539,7 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
            ];
            executableHaskellDepends = [
              aeson attoparsec base bytestring containers data-default-class
-             directory exceptions filepath gitrev http-media lens lens-aeson
+             directory exceptions extra filepath gitrev http-media lens lens-aeson
              monad-logger mtl natural-transformation optparse-applicative
              process servant servant-server system-filepath temporary text time
              transformers unordered-containers vector wai wai-cors wai-extra

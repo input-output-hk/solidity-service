@@ -39,6 +39,7 @@ library
     , data-default-class
     , directory
     , exceptions
+    , extra
     , filepath
     , gitrev
     , http-media
