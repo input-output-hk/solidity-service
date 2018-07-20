@@ -24,7 +24,11 @@ import Data.Text (Text)
 import Development.GitRev (gitHash)
 import Network.HTTP.Types (Method)
 import Network.Wai (Application)
-import Network.Wai.Middleware.Cors (simpleCors)
+import Network.Wai.Middleware.Cors
+  ( cors
+  , corsRequestHeaders
+  , simpleCorsResourcePolicy
+  )
 import Network.Wai.Middleware.Gzip (gzip)
 import Network.Wai.Middleware.RequestLogger (logStdout)
 import Network.Wai.Middleware.Servant.Options (provideOptions)
@@ -56,8 +60,10 @@ rpcHandler (RPCRequestCompile rpcID compilation) = do
 
 app :: FilePath -> Application
 app staticDir =
-  gzip def . logStdout . simpleCors . provideOptions webApi . serve webApi $
+  gzip def .
+  logStdout . cors (const $ Just policy) . provideOptions webApi . serve webApi $
   server staticDir
   where
+    policy = simpleCorsResourcePolicy {corsRequestHeaders = ["content-type"]}
     webApi :: Proxy Web
     webApi = Proxy
