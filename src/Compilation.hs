@@ -110,7 +110,7 @@ finalCompileStep tempDir file compilerType = do
     ExitFailure code -> throwError $ CompilationFailed code out err
     ExitSuccess -> pure out
   where
-    stripTempDir = Text.replace (Text.pack (tempDir </> "")) ""
+    stripTempDir = Text.replace (Text.pack (tempDir <> "/")) ""
 
 processForCompiler :: Compiler -> FilePath -> CreateProcess
 processForCompiler SolidityIELEASM outputFilename =
