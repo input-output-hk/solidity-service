@@ -13,7 +13,7 @@ module Webserver.Types where
 import Compilation
   ( Compilation(Compilation, _compiler, _files, _mainFilename)
   , CompilationError(CompilationFailed, IOError, InvalidInputPath)
-  , Compiler(IELEASM, SolidityIELEABI, SolidityIELEASM)
+  , Compiler(IELEASM, SolidityIELEABI, SolidityIELEASM, SolidityIELEAST)
   )
 import Control.Lens (makeLenses, makePrisms)
 import Data.Aeson
@@ -61,6 +61,7 @@ instance FromJSON RPCRequest where
         case method of
           "sol2iele_asm" -> pure SolidityIELEASM
           "sol2iele_abi" -> pure SolidityIELEABI
+          "sol2iele_ast" -> pure SolidityIELEAST
           "iele_asm" -> pure IELEASM
           _ -> fail $ "method not recognised: " <> method
 

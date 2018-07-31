@@ -49,6 +49,7 @@ data Compilation = Compilation
 data Compiler
   = SolidityIELEASM
   | SolidityIELEABI
+  | SolidityIELEAST
   | IELEASM
   deriving (Show, Eq, Generic)
 
@@ -117,6 +118,8 @@ processForCompiler SolidityIELEASM outputFilename =
   proc "isolc" ["--asm", outputFilename]
 processForCompiler SolidityIELEABI outputFilename =
   proc "isolc" ["--abi", outputFilename]
+processForCompiler SolidityIELEAST outputFilename =
+  proc "isolc" ["--ast-json", outputFilename]
 processForCompiler IELEASM outputFilename =
   proc "iele-assemble" [outputFilename]
 
