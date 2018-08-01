@@ -14,7 +14,7 @@ import Webserver.Types (RPCRequest, instructions)
 spec :: Spec
 spec =
   describe "JSON" $ do
-    it "JSON decoding 1" $ do
+    it "JSON decoding IELE ASM 2" $ do
       decoded :: Either String RPCRequest <-
         eitherDecode' <$> LBS.readFile "test/Webserver/Sol2IELEAsm1.json"
       decoded `shouldSatisfy` isRight
@@ -22,7 +22,7 @@ spec =
         Just "mortal.sol"
       decoded ^.. (_Right . instructions . files . ifolded . asIndex) `shouldBe`
         ["mortal.sol", "owned.sol"]
-    it "JSON decoding 2" $ do
+    it "JSON decoding IELE ASM 2" $ do
       decoded :: Either String RPCRequest <-
         eitherDecode' <$> LBS.readFile "test/Webserver/Sol2IELEAsm2.json"
       decoded `shouldSatisfy` isRight
