@@ -69,11 +69,10 @@ brokenFilesSpec =
   describe "Compilation" $
   sequence_ $ do
     compiler <- [SolidityIELEASM, SolidityIELEABI]
-    file <-
-      [ "test/Ballot_Broken.sol"
-      ]
+    file <- ["test/Ballot_Broken.sol"]
     pure $
-      it ("should throw a warning compiling " <> file <> " to " <> show compiler) $ do
+      it
+        ("should throw a warning compiling " <> file <> " to " <> show compiler) $ do
         compilation <- singleFileCompilation compiler file
         result <- runStderrLoggingT $ compile compilation
         result `shouldSatisfy` isLeft
