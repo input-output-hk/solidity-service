@@ -9,22 +9,25 @@ module CompilationSpec
 import Compilation
   ( Compilation(Compilation)
   , CompilationError(CompilationFailed)
-  , Compiler(SolidityIELEABI, SolidityIELEASM)
+  , Compiler(IELEASM, SolidityCombinedJSON, SolidityIELEABI,
+         SolidityIELEASM)
   , _compiler
   , _files
   , _mainFilename
   , compile
+  , processForCompiler
   )
 import Control.Lens (view)
 import Control.Monad.Logger (runStderrLoggingT)
 import Data.Aeson (eitherDecode')
 import qualified Data.ByteString.Lazy as LBS
-import Data.Either (isLeft,isRight)
+import Data.Either (isLeft, isRight)
 import qualified Data.Map as Map
 import Data.Monoid ((<>))
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import PathUtils (mkTaintedPath)
+import System.Process (CmdSpec(RawCommand), cmdspec)
 import Test.Hspec (Spec, describe, it, shouldBe, shouldNotBe, shouldSatisfy)
 import Webserver.Types (instructions)
 
@@ -33,6 +36,7 @@ spec = do
   jsonFilesSpec
   sampleFilesSpec
   brokenFilesSpec
+  processForCompilerSpec
 
 jsonFilesSpec :: Spec
 jsonFilesSpec =
@@ -93,3 +97,17 @@ singleFileCompilation _compiler filename = do
       , _files = Map.fromList [(assertPath, assertContents)]
       , ..
       }
+
+processForCompilerSpec :: Spec
+processForCompilerSpec =
+  describe "processForCompiler" $ do
+    it "should construct the right solidity-iele-asm commands" $
+      cmdspec (processForCompiler SolidityIELEASM "foo.sol") `shouldBe`
+      RawCommand "isolc" ["--asm", "foo.sol"]
+    it "should construct the right iele-asm commands" $
+      cmdspec (processForCompiler IELEASM "foo.sol") `shouldBe`
+      RawCommand "iele-assemble" ["foo.sol"]
+    it "should construct the right solidity combined" $
+      cmdspec
+        (processForCompiler (SolidityCombinedJSON ["asm", "abi"]) "foo.sol") `shouldBe`
+      RawCommand "isolc" ["--combined-json", "asm,abi", "foo.sol"]

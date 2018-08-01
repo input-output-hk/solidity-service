@@ -1,9 +1,16 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Webserver.TypesSpec (spec) where
+module Webserver.TypesSpec
+  ( spec
+  ) where
 
-import Compilation (files, mainFilename)
+import Compilation
+  ( Compiler(SolidityCombinedJSON)
+  , compiler
+  , files
+  , mainFilename
+  )
 import Control.Lens ((^..), (^?), _Right, asIndex, ifolded)
 import Data.Aeson (eitherDecode')
 import qualified Data.ByteString.Lazy as LBS
@@ -30,3 +37,13 @@ spec =
         Just "browser/ballot.sol"
       decoded ^.. (_Right . instructions . files . ifolded . asIndex) `shouldBe`
         ["browser/ballot.sol"]
+    it "JSON decoding IELE Combined JSON" $ do
+      decoded :: Either String RPCRequest <-
+        eitherDecode' <$> LBS.readFile "test/Webserver/SolidityCombined.json"
+      decoded `shouldSatisfy` isRight
+      decoded ^? (_Right . instructions . mainFilename) `shouldBe`
+        Just "source.sol"
+      decoded ^? (_Right . instructions . compiler) `shouldBe`
+        Just (SolidityCombinedJSON ["ast", "asm", "ast"])
+      decoded ^.. (_Right . instructions . files . ifolded . asIndex) `shouldBe`
+        ["source.sol"]

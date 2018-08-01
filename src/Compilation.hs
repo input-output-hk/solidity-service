@@ -14,6 +14,7 @@ module Compilation
   , files
   , compiler
   , mainFilename
+  , processForCompiler
   ) where
 
 import Control.Exception (IOException, try)
@@ -24,6 +25,7 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger (MonadLogger, logDebugN, logErrorN)
 import Data.Aeson (ToJSON)
 import Data.Foldable (traverse_)
+import Data.List (intercalate)
 import qualified Data.Map as Map
 import Data.Map.Strict (Map)
 import Data.Monoid ((<>))
@@ -50,6 +52,7 @@ data Compiler
   = SolidityIELEASM
   | SolidityIELEABI
   | SolidityIELEAST
+  | SolidityCombinedJSON [String]
   | IELEASM
   deriving (Show, Eq, Generic)
 
@@ -120,6 +123,8 @@ processForCompiler SolidityIELEABI outputFilename =
   proc "isolc" ["--abi", outputFilename]
 processForCompiler SolidityIELEAST outputFilename =
   proc "isolc" ["--ast-json", outputFilename]
+processForCompiler (SolidityCombinedJSON outputTypes) outputFilename =
+  proc "isolc" ["--combined-json", intercalate "," outputTypes, outputFilename]
 processForCompiler IELEASM outputFilename =
   proc "iele-assemble" [outputFilename]
 
