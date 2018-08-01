@@ -13,7 +13,8 @@ module Webserver.Types where
 import Compilation
   ( Compilation(Compilation, _compiler, _files, _mainFilename)
   , CompilationError(CompilationFailed, IOError, InvalidInputPath)
-  , Compiler(IELEASM, SolidityIELEABI, SolidityIELEASM, SolidityIELEAST)
+  , Compiler(IELEASM, SolidityCombinedJSON, SolidityIELEABI,
+         SolidityIELEASM, SolidityIELEAST)
   )
 import Control.Lens (makeLenses, makePrisms)
 import Data.Aeson
@@ -41,17 +42,26 @@ data RPCRequest = RPCRequestCompile
   , _instructions :: !Compilation
   } deriving (Show, Eq, Generic)
 
+-- | Note: I don't like this JSON format. Representing the
+-- parameters as an unstructured list, instead of an object,
+-- really complicates the parsing. :-(
 instance FromJSON RPCRequest where
   parseJSON =
     withObject "RPCRequest" $ \obj -> do
       _rpcRequestId <- obj .:? "id"
-      _compiler <- parseCompiler =<< obj .: "method"
+      method <- obj .: "method"
       params <- traverse parseJSON =<< Vector.toList <$> obj .: "params"
       _instructions <-
-        case params of
-          [x, y] -> do
-            _mainFilename <- parseJSON x
-            _files <- parseJSON y
+        case (method, params) of
+          ("isolc_combined_json", [outputTypes, filename, files]) -> do
+            _compiler <- SolidityCombinedJSON <$> parseJSON outputTypes
+            _mainFilename <- parseJSON filename
+            _files <- parseJSON files
+            pure Compilation {..}
+          (_, [filename, files]) -> do
+            _compiler <- parseCompiler method
+            _mainFilename <- parseJSON filename
+            _files <- parseJSON files
             pure Compilation {..}
           _ -> fail "Invalid payload."
       pure RPCRequestCompile {..}

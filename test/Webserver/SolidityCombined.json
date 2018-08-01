@@ -1,0 +1,14 @@
+{
+  "method": "isolc_combined_json",
+  "params": [
+    [
+      "ast",
+      "asm",
+      "ast"
+    ],
+    "source.sol",
+    {
+      "source.sol": "solidity code goes here"
+    }
+  ]
+}
