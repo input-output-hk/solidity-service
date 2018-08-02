@@ -112,7 +112,7 @@ finalCompileStep tempDir file compilerType = do
   logDebugN $ "Compiled: " <> showt compilationResult
   case compilationResult of
     ExitFailure code -> throwError $ CompilationFailed code out err
-    ExitSuccess -> pure out
+    ExitSuccess -> pure $ err <> out
   where
     stripTempDir = Text.replace (Text.pack (tempDir <> "/")) ""
 
