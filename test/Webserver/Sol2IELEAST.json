@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "method": "sol2iele_ast",
+  "params": [
+    "mortal.sol",
+    {
+      "owned.sol": "pragma solidity ^0.4.9;\ncontract owned {\n    function owned() { owner = msg.sender; }\n    address owner;\n}",
+      "mortal.sol": "pragma solidity ^0.4.9;\nimport \"./owned.sol\";\ncontract mortal is owned{\n    function kill() {\n        selfdestruct(owner);\n    }\n}"
+    }
+  ],
+  "id": 1
+}

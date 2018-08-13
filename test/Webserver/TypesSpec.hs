@@ -37,6 +37,14 @@ spec =
         Just "browser/ballot.sol"
       decoded ^.. (_Right . instructions . files . ifolded . asIndex) `shouldBe`
         ["browser/ballot.sol"]
+    it "JSON decoding IELE AST" $ do
+      decoded :: Either String RPCRequest <-
+        eitherDecode' <$> LBS.readFile "test/Webserver/Sol2IELEAST.json"
+      decoded `shouldSatisfy` isRight
+      decoded ^? (_Right . instructions . mainFilename) `shouldBe`
+        Just "mortal.sol"
+      decoded ^.. (_Right . instructions . files . ifolded . asIndex) `shouldBe`
+        ["mortal.sol", "owned.sol"]
     it "JSON decoding IELE Combined JSON" $ do
       decoded :: Either String RPCRequest <-
         eitherDecode' <$> LBS.readFile "test/Webserver/SolidityCombined.json"
