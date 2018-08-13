@@ -10,6 +10,7 @@ cabal-version:  >= 1.10
 
 extra-source-files:
     README.md
+data-files:
     test/*.sol
     test/Webserver/*.json
 

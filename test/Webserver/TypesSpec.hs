@@ -15,6 +15,7 @@ import Control.Lens ((^..), (^?), _Right, asIndex, ifolded)
 import Data.Aeson (eitherDecode')
 import qualified Data.ByteString.Lazy as LBS
 import Data.Either (isRight)
+import Paths_solidity_service (getDataFileName)
 import Test.Hspec (Spec, describe, it, shouldBe, shouldSatisfy)
 import Webserver.Types (RPCRequest, instructions)
 
@@ -23,7 +24,8 @@ spec =
   describe "JSON" $ do
     it "JSON decoding IELE ASM 2" $ do
       decoded :: Either String RPCRequest <-
-        eitherDecode' <$> LBS.readFile "test/Webserver/Sol2IELEAsm1.json"
+        eitherDecode' <$>
+        (LBS.readFile =<< getDataFileName "test/Webserver/Sol2IELEAsm1.json")
       decoded `shouldSatisfy` isRight
       decoded ^? (_Right . instructions . mainFilename) `shouldBe`
         Just "mortal.sol"
@@ -31,7 +33,8 @@ spec =
         ["mortal.sol", "owned.sol"]
     it "JSON decoding IELE ASM 2" $ do
       decoded :: Either String RPCRequest <-
-        eitherDecode' <$> LBS.readFile "test/Webserver/Sol2IELEAsm2.json"
+        eitherDecode' <$>
+        (LBS.readFile =<< getDataFileName "test/Webserver/Sol2IELEAsm2.json")
       decoded `shouldSatisfy` isRight
       decoded ^? (_Right . instructions . mainFilename) `shouldBe`
         Just "browser/ballot.sol"
@@ -39,7 +42,8 @@ spec =
         ["browser/ballot.sol"]
     it "JSON decoding IELE AST" $ do
       decoded :: Either String RPCRequest <-
-        eitherDecode' <$> LBS.readFile "test/Webserver/Sol2IELEAST.json"
+        eitherDecode' <$>
+        (LBS.readFile =<< getDataFileName "test/Webserver/Sol2IELEAST.json")
       decoded `shouldSatisfy` isRight
       decoded ^? (_Right . instructions . mainFilename) `shouldBe`
         Just "mortal.sol"
@@ -47,7 +51,8 @@ spec =
         ["mortal.sol", "owned.sol"]
     it "JSON decoding IELE Combined JSON" $ do
       decoded :: Either String RPCRequest <-
-        eitherDecode' <$> LBS.readFile "test/Webserver/SolidityCombined.json"
+        eitherDecode' <$>
+        (LBS.readFile =<< getDataFileName "test/Webserver/SolidityCombined.json")
       decoded `shouldSatisfy` isRight
       decoded ^? (_Right . instructions . mainFilename) `shouldBe`
         Just "source.sol"
