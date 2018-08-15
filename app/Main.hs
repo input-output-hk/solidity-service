@@ -5,15 +5,19 @@
 
 module Main where
 
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Logger (MonadLogger, logInfoN, runStderrLoggingT)
+import Data.Function ((&))
 import Data.Monoid ((<>))
 import qualified Data.Text as Text
 import Development.GitRev (gitHash)
+import Network (HostName)
+import qualified Network.Monitoring.Riemann.Client as Riemann
+import qualified Network.Monitoring.Riemann.Event as Riemann
+import qualified Network.Monitoring.Riemann.TCPClient as Riemann
 import Network.Wai.Handler.Warp
   ( HostPreference
   , defaultSettings
-  , runSettings
   , setHost
   , setPort
   )
@@ -38,11 +42,14 @@ import Options.Applicative
   , strOption
   , value
   )
+import qualified Riemann
+import UnliftIO (MonadUnliftIO)
 import qualified Webserver
 
 data Command = Run
   { _host :: HostPreference
   , _port :: Int
+  , _riemannHost :: HostName
   , _staticDir :: FilePath
   } deriving (Show, Eq)
 
@@ -61,14 +68,21 @@ commandParser = do
       auto
       (short 'p' <> long "port" <> help "Webserver port number" <> showDefault <>
        value 8080)
+  _riemannHost <-
+    strOption
+      (short 'r' <> long "riemann" <> help "Reimann host" <> showDefault <>
+       value "localhost")
   _staticDir <-
     argument str (metavar "STATIC_DIR" <> help "Static directory to serve up")
   pure Run {..}
 
-runCommand :: (MonadIO m, MonadLogger m) => Command -> m ()
+runCommand :: (MonadUnliftIO m, MonadLogger m) => Command -> m ()
 runCommand Run {..} = do
   logInfoN . Text.pack $ "Running on " <> show _host <> ":" <> show _port
-  liftIO . runSettings settings $ Webserver.app _staticDir
+  riemannClient <- liftIO $ Riemann.tcpClient _riemannHost 5555
+  Riemann.sendEvent riemannClient $
+    Riemann.ok Riemann.service & Riemann.description "Startup"
+  Webserver.run settings riemannClient _staticDir
   where
     settings = setHost _host . setPort _port $ defaultSettings
 
@@ -78,4 +92,6 @@ main = do
     customExecParser
       (prefs disambiguate)
       (info (helper <*> versionOption <*> commandParser) idm)
-  runStderrLoggingT $ runCommand command
+  runStderrLoggingT $ do
+    logInfoN $ "Running: " <> Text.pack (show command)
+    runCommand command

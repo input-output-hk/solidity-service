@@ -23,6 +23,7 @@ library
       Compilation
       Data.Text.Extra
       PathUtils
+      Riemann
       Webserver
       Webserver.API
       Webserver.Types
@@ -45,6 +46,7 @@ library
     , gitrev
     , http-media
     , http-types
+    , hriemann
     , lens
     , lens-aeson
     , monad-logger
@@ -62,6 +64,7 @@ library
     , time
     , transformers
     , unordered-containers
+    , unliftio
     , vector
     , wai
     , wai-cors
@@ -88,11 +91,13 @@ executable solidity-service
     , filepath
     , gitrev
     , http-media
+    , hriemann
     , lens
     , lens-aeson
     , monad-logger
     , mtl
     , natural-transformation
+    , network
     , optparse-applicative
     , process
     , servant
@@ -104,6 +109,7 @@ executable solidity-service
     , time
     , transformers
     , unordered-containers
+    , unliftio
     , vector
     , wai
     , wai-cors
@@ -123,39 +129,15 @@ test-suite solidity-service-test
       test
   ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-import-lists -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      HUnit
-    , aeson
-    , attoparsec
+      aeson
     , base
     , bytestring
     , containers
-    , data-default-class
-    , directory
-    , exceptions
-    , filepath
-    , gitrev
     , hspec
     , hspec-core
-    , http-media
     , lens
-    , lens-aeson
     , monad-logger
-    , mtl
-    , natural-transformation
-    , optparse-applicative
     , process
-    , servant
-    , servant-server
     , solidity-service
-    , system-filepath
-    , temporary
     , text
-    , time
-    , transformers
-    , unordered-containers
-    , vector
-    , wai
-    , wai-cors
-    , wai-extra
-    , warp
   default-language: Haskell2010

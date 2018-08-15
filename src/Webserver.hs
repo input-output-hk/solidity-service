@@ -12,18 +12,20 @@
 {-# LANGUAGE TypeOperators #-}
 
 module Webserver
-  ( app
+  ( run
   ) where
 
 import Compilation (compile)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Logger (runStderrLoggingT)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Logger (MonadLogger, runStderrLoggingT)
 import Data.Default.Class (def)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
 import Development.GitRev (gitHash)
 import Network.HTTP.Types (Method)
+import qualified Network.Monitoring.Riemann.Client as Riemann
 import Network.Wai (Application)
+import Network.Wai.Handler.Warp (Settings, runSettings)
 import Network.Wai.Middleware.Cors
   ( cors
   , corsRequestHeaders
@@ -35,6 +37,7 @@ import Network.Wai.Middleware.Servant.Options (provideOptions)
 import Servant ((:<|>)((:<|>)), serve, serveDirectoryFileServer)
 import Servant.Foreign (GenerateList, NoContent, Req, generateList)
 import Servant.Server (Handler, Server)
+import UnliftIO (MonadUnliftIO)
 import Webserver.API (Web)
 import Webserver.Types
   ( RPCRequest(RPCRequestCompile)
@@ -67,3 +70,12 @@ app staticDir =
     policy = simpleCorsResourcePolicy {corsRequestHeaders = ["content-type"]}
     webApi :: Proxy Web
     webApi = Proxy
+
+run ::
+     (MonadLogger m, MonadUnliftIO m, MonadIO m, Riemann.Client m client)
+  => Settings
+  -> client
+  -> FilePath
+  -> m ()
+run settings riemannClient staticDir =
+  liftIO . runSettings settings $ Webserver.app staticDir
