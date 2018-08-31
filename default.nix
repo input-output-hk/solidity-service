@@ -33600,7 +33600,7 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
       "solidity-service" = callPackage
         ({ mkDerivation, aeson, attoparsec, base, bytestring, containers
          , data-default-class, directory, exceptions, extra, filepath
-         , gitrev, hriemann, http-media, http-types, lens, lens-aeson
+         , gitrev, hriemann, http-media, http-types, hspec, hspec-core, lens, lens-aeson
          , monad-logger, mtl, natural-transformation, network
          , optparse-applicative, process, servant, servant-foreign
          , servant-options, servant-server, stdenv, system-filepath
