@@ -135,6 +135,7 @@ test-suite solidity-service-test
     , containers
     , hspec
     , hspec-core
+    , hriemann
     , lens
     , monad-logger
     , process
