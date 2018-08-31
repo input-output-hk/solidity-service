@@ -1,4 +1,6 @@
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
@@ -38,34 +40,37 @@ import Options.Applicative
   )
 import qualified Webserver
 
-data Command =
-  Run HostPreference
-      Int
-      FilePath
-  deriving (Show, Eq)
+data Command = Run
+  { _host :: HostPreference
+  , _port :: Int
+  , _staticDir :: FilePath
+  } deriving (Show, Eq)
 
 versionOption :: Parser (a -> a)
 versionOption =
   infoOption $(gitHash) (short 'v' <> long "version" <> help "Show the version")
 
 commandParser :: Parser Command
-commandParser =
-  Run <$>
-  (strOption
-     (short 'b' <> long "bind" <> help "Webserver bind address" <> showDefault <>
-      value "127.0.0.1")) <*>
-  option
-    auto
-    (short 'p' <> long "port" <> help "Webserver port number" <> showDefault <>
-     value 8080) <*>
-  argument str (metavar "STATIC_DIR" <> help "Static directory to serve up")
+commandParser = do
+  _host <-
+    strOption
+      (short 'b' <> long "bind" <> help "Webserver bind address" <> showDefault <>
+       value "127.0.0.1")
+  _port <-
+    option
+      auto
+      (short 'p' <> long "port" <> help "Webserver port number" <> showDefault <>
+       value 8080)
+  _staticDir <-
+    argument str (metavar "STATIC_DIR" <> help "Static directory to serve up")
+  pure Run {..}
 
 runCommand :: (MonadIO m, MonadLogger m) => Command -> m ()
-runCommand (Run host port staticDir) = do
-  logInfoN . Text.pack $ "Running on " <> show host <> ":" <> show port
-  liftIO . runSettings settings $ Webserver.app staticDir
+runCommand Run {..} = do
+  logInfoN . Text.pack $ "Running on " <> show _host <> ":" <> show _port
+  liftIO . runSettings settings $ Webserver.app _staticDir
   where
-    settings = setHost host . setPort port $ defaultSettings
+    settings = setHost _host . setPort _port $ defaultSettings
 
 main :: IO ()
 main = do
