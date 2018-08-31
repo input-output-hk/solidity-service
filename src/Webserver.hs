@@ -17,7 +17,7 @@ module Webserver
 
 import Compilation (compile)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Logger (MonadLogger, runStderrLoggingT)
+import Control.Monad.Logger (LoggingT, MonadLogger, runStderrLoggingT)
 import Data.Default.Class (def)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
@@ -47,35 +47,45 @@ import Webserver.Types
 instance GenerateList NoContent (Method -> Req NoContent) where
   generateList _ = []
 
-server :: FilePath -> Server Web
-server staticDir =
-  version :<|> rpcHandler :<|> serveDirectoryFileServer staticDir
+server ::
+     (Riemann.Client (LoggingT IO) client) => client -> FilePath -> Server Web
+server riemannClient staticDir =
+  version :<|> rpcHandler riemannClient :<|> serveDirectoryFileServer staticDir
 
 version :: Applicative m => m Text
 version = pure $(gitHash)
 
-rpcHandler :: RPCRequest -> Handler RPCResponse
-rpcHandler (RPCRequestCompile rpcID compilation) = do
-  result <- liftIO . runStderrLoggingT $ compile compilation
+rpcHandler ::
+     (Riemann.Client (LoggingT IO) client)
+  => client
+  -> RPCRequest
+  -> Handler RPCResponse
+rpcHandler riemannClient (RPCRequestCompile rpcID compilation) = do
+  result <- liftIO . runStderrLoggingT $ compile riemannClient compilation
   case result of
     Left err -> pure $ RPCError rpcID err
     Right response -> pure $ RPCSuccess rpcID response
 
-app :: FilePath -> Application
-app staticDir =
+app ::
+     (Riemann.Client (LoggingT IO) client) => client -> FilePath -> Application
+app riemannClient staticDir =
   gzip def .
   logStdout . cors (const $ Just policy) . provideOptions webApi . serve webApi $
-  server staticDir
+  server riemannClient staticDir
   where
     policy = simpleCorsResourcePolicy {corsRequestHeaders = ["content-type"]}
     webApi :: Proxy Web
     webApi = Proxy
 
 run ::
-     (MonadLogger m, MonadUnliftIO m, MonadIO m, Riemann.Client m client)
+     ( MonadLogger m
+     , MonadUnliftIO m
+     , MonadIO m
+     , Riemann.Client (LoggingT IO) client
+     )
   => Settings
   -> client
   -> FilePath
   -> m ()
 run settings riemannClient staticDir =
-  liftIO . runSettings settings $ Webserver.app staticDir
+  liftIO . runSettings settings $ Webserver.app riemannClient staticDir

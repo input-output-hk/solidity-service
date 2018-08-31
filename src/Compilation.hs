@@ -25,6 +25,7 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger (MonadLogger, logDebugN, logErrorN)
 import Data.Aeson (ToJSON)
 import Data.Foldable (traverse_)
+import Data.Function ((&))
 import Data.List (intercalate)
 import qualified Data.Map as Map
 import Data.Map.Strict (Map)
@@ -35,7 +36,10 @@ import Data.Text.Extra (showt)
 import qualified Data.Text.IO as Text
 import Data.Tuple.Extra (both)
 import GHC.Generics (Generic)
+import qualified Network.Monitoring.Riemann.Client as Riemann
+import qualified Network.Monitoring.Riemann.Event as Riemann
 import PathUtils (TaintedPath, toSafePath)
+import qualified Riemann
 import System.Directory (createDirectoryIfMissing)
 import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 import System.FilePath.Posix ((</>), takeDirectory)
@@ -67,22 +71,32 @@ data CompilationError
   deriving (Show, Eq, Generic, ToJSON)
 
 compile ::
-     (MonadIO m, MonadLogger m, MonadMask m)
-  => Compilation
+     forall m client.
+     (MonadIO m, MonadLogger m, MonadMask m, Riemann.Client m client)
+  => client
+  -> Compilation
   -> m (Either CompilationError Text)
-compile Compilation {..} =
+compile riemannClient Compilation {..} =
   case toSafePath _mainFilename of
     Nothing -> pure . Left $ InvalidInputPath _mainFilename
-    Just file ->
-      withSystemTempDirectory
-        "solidity"
-        (\tempDir ->
-           runExceptT $ do
-             traverse_ (uncurry (writeTempFile tempDir)) (Map.toList _files)
-             finalCompileStep tempDir file _compiler) >>=
-      logAnyErrors
+    Just file -> do
+      result <-
+        withSystemTempDirectory
+          "solidity"
+          (\tempDir ->
+             runExceptT $ do
+               traverse_ (uncurry (writeTempFile tempDir)) (Map.toList _files)
+               finalCompileStep tempDir file _compiler)
+      _ <- logAnyErrors result
+      _ <- logResult result
+      pure result
   where
-    logAnyErrors result@(Left err) = do
+    logResult :: Either CompilationError Text -> m ()
+    logResult result =
+      case toRiemannEvent result of
+        Nothing -> pure ()
+        Just event -> Riemann.sendEvent riemannClient event
+    logAnyErrors (Left err) = do
       logErrorN $ "Compilation of '" <> showt _mainFilename <> "' failed: "
       logErrorN $ "Error: " <> showt err
       traverse_
@@ -91,8 +105,17 @@ compile Compilation {..} =
               logErrorN $ "  " <> showt name <> ":"
               logErrorN contents))
         (Map.toList _files)
-      pure result
-    logAnyErrors result = pure result
+    logAnyErrors _ = pure ()
+
+toRiemannEvent :: Either CompilationError Text -> Maybe Riemann.Event
+toRiemannEvent (Left (IOError err)) =
+  Just $
+  Riemann.failure Riemann.service & Riemann.description "IOError compiling file" &
+  Riemann.attributes [Riemann.attribute "IOError" (Just (show err))]
+toRiemannEvent (Left InvalidInputPath {}) = Nothing
+toRiemannEvent (Left CompilationFailed {}) = Nothing
+toRiemannEvent (Right _) =
+  Just $ Riemann.ok Riemann.service & Riemann.description "Compiled file."
 
 finalCompileStep ::
      (MonadLogger m, MonadIO m, MonadError CompilationError m)
