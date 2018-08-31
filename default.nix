@@ -33617,7 +33617,7 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
            libraryHaskellDepends = [
              aeson attoparsec base bytestring containers data-default-class
              directory exceptions extra filepath gitrev hriemann http-media
-             http-types lens lens-aeson monad-logger mtl natural-transformation
+             http-types lens lens-aeson monad-logger mtl natural-transformation network
              optparse-applicative process servant servant-foreign
              servant-options servant-server system-filepath temporary text time
              transformers unliftio unordered-containers vector wai wai-cors
