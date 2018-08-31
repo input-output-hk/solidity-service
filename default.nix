@@ -33600,12 +33600,12 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
       "solidity-service" = callPackage
         ({ mkDerivation, aeson, attoparsec, base, bytestring, containers
          , data-default-class, directory, exceptions, extra, filepath
-         , gitrev, hriemann, http-media, http-types, hspec, hspec-core, lens, lens-aeson
-         , monad-logger, mtl, natural-transformation, network, optparse-applicative
-         , process, servant, servant-foreign, servant-options
-         , servant-server, stdenv, system-filepath, temporary, text, time
-         , transformers, unliftio, unordered-containers, vector, wai
-         , wai-cors, wai-extra, warp
+         , gitrev, hriemann, http-media, http-types, lens, lens-aeson
+         , monad-logger, mtl, natural-transformation, network
+         , optparse-applicative, process, servant, servant-foreign
+         , servant-options, servant-server, stdenv, system-filepath
+         , temporary, text, time, transformers, unliftio
+         , unordered-containers, vector, wai, wai-cors, wai-extra, warp
          }:
          mkDerivation {
            pname = "solidity-service";
@@ -33617,7 +33617,7 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
            libraryHaskellDepends = [
              aeson attoparsec base bytestring containers data-default-class
              directory exceptions extra filepath gitrev hriemann http-media
-             http-types lens lens-aeson monad-logger mtl natural-transformation network
+             http-types lens lens-aeson monad-logger mtl natural-transformation
              optparse-applicative process servant servant-foreign
              servant-options servant-server system-filepath temporary text time
              transformers unliftio unordered-containers vector wai wai-cors
@@ -33625,11 +33625,11 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
            ];
            executableHaskellDepends = [
              aeson attoparsec base bytestring containers data-default-class
-             directory exceptions filepath gitrev http-media hriemann lens lens-aeson
-             monad-logger mtl natural-transformation network optparse-applicative
-             process servant servant-server system-filepath temporary text time
-             transformers unliftio unordered-containers vector wai wai-cors wai-extra
-             warp
+             directory exceptions filepath gitrev hriemann http-media lens
+             lens-aeson monad-logger mtl natural-transformation network
+             optparse-applicative process servant servant-server system-filepath
+             temporary text time transformers unliftio unordered-containers
+             vector wai wai-cors wai-extra warp
            ];
            executableToolDepends = [ solidity iele pkgs.makeWrapper ];
            testHaskellDepends = [
