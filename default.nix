@@ -33633,7 +33633,7 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
            ];
            executableToolDepends = [ solidity iele pkgs.makeWrapper ];
            testHaskellDepends = [
-             aeson base bytestring containers hspec hspec-core lens monad-logger process text
+             aeson base bytestring containers hspec hspec-core hriemann lens monad-logger process text
            ];
            testToolDepends = [ solidity iele ];
            postInstall = ''
