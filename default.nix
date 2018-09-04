@@ -33613,6 +33613,7 @@ inherit (pkgs) libjpeg; inherit (pkgs) libpng; inherit (pkgs) zlib;};
            src = ./.;
            isLibrary = true;
            isExecutable = true;
+           buildTools = [ pkgs.git ];
            enableSeparateDataOutput = true;
            libraryHaskellDepends = [
              aeson attoparsec base bytestring containers data-default-class
