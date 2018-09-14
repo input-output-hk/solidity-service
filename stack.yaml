@@ -40,7 +40,7 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - servant-options-0.1.0.0
-- hriemann-0.3.3.0
+- hriemann-0.3.3.3
 - kazura-queue-0.1.0.2
 - unagi-chan-0.4.1.0
 
