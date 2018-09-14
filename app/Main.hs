@@ -81,7 +81,7 @@ runCommand Run {..} = do
   logInfoN . Text.pack $ "Running on " <> show _host <> ":" <> show _port
   riemannClient <- liftIO $ Riemann.tcpClient _riemannHost 5555
   Riemann.sendEvent riemannClient $
-    Riemann.ok Riemann.service & Riemann.description "Startup"
+    Riemann.ok Riemann.service & Riemann.version & Riemann.description "Startup"
   Webserver.run settings riemannClient _staticDir
   where
     settings = setHost _host . setPort _port $ defaultSettings

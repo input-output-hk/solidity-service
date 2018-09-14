@@ -110,12 +110,15 @@ compile riemannClient Compilation {..} =
 toRiemannEvent :: Either CompilationError Text -> Maybe Riemann.Event
 toRiemannEvent (Left (IOError err)) =
   Just $
-  Riemann.failure Riemann.service & Riemann.description "IOError compiling file" &
+  Riemann.failure Riemann.service & Riemann.version &
+  Riemann.description "IOError compiling file" &
   Riemann.attributes [Riemann.attribute "IOError" (Just (show err))]
 toRiemannEvent (Left InvalidInputPath {}) = Nothing
 toRiemannEvent (Left CompilationFailed {}) = Nothing
 toRiemannEvent (Right _) =
-  Just $ Riemann.ok Riemann.service & Riemann.description "Compiled file."
+  Just $
+  Riemann.ok Riemann.service & Riemann.version &
+  Riemann.description "Compiled file."
 
 finalCompileStep ::
      (MonadLogger m, MonadIO m, MonadError CompilationError m)
