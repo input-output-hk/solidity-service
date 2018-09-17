@@ -2,7 +2,8 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module PathUtils
-  ( TaintedPath,mkTaintedPath
+  ( TaintedPath
+  , mkTaintedPath
   , toSafePath
   ) where
 

@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DataKinds #-}
+
 -- | hindent doesn't really play well with Servant's type operators, so
 -- | just convenience we put the API spec in its own module, where we
 -- | can avoid autoformatting.

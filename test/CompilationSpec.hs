@@ -47,7 +47,9 @@ jsonFilesSpec =
     case decoded of
       Left err -> fail err
       Right rpcRequest -> do
-        result <- runStderrLoggingT $ compile Riemann.loggingClient $ view instructions rpcRequest
+        result <-
+          runStderrLoggingT $
+          compile Riemann.loggingClient $ view instructions rpcRequest
         result `shouldSatisfy` isRight
 
 sampleFilesSpec :: Spec
