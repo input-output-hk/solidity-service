@@ -44,9 +44,9 @@ library
     , extra
     , filepath
     , gitrev
+    , hriemann
     , http-media
     , http-types
-    , hriemann
     , lens
     , lens-aeson
     , monad-logger
@@ -56,15 +56,15 @@ library
     , process
     , servant
     , servant-foreign
-    , servant-server
     , servant-options
+    , servant-server
     , system-filepath
     , temporary
     , text
     , time
     , transformers
-    , unordered-containers
     , unliftio
+    , unordered-containers
     , vector
     , wai
     , wai-cors
