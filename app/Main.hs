@@ -5,6 +5,8 @@
 
 module Main where
 
+import Control.Concurrent (forkIO, threadDelay)
+import Control.Monad (void, forever)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Logger (MonadLogger, logInfoN, runStderrLoggingT)
 import Data.Function ((&))
@@ -82,6 +84,12 @@ runCommand Run {..} = do
   riemannClient <- liftIO $ Riemann.tcpClient _riemannHost 5555
   Riemann.sendEvent riemannClient $
     Riemann.ok Riemann.service & Riemann.version & Riemann.description "Startup"
+  let healthDelaySeconds = 30
+      healthDelayMicros = healthDelaySeconds * 1000 * 1000
+  void . liftIO . forkIO . forever $ do
+    threadDelay healthDelayMicros
+    Riemann.sendEvent riemannClient $
+      Riemann.ok (Riemann.service <> " health") & Riemann.version & Riemann.ttl (fromIntegral healthDelaySeconds * 2)
   Webserver.run settings riemannClient _staticDir
   where
     settings = setHost _host . setPort _port $ defaultSettings
