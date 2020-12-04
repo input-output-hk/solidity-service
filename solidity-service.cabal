@@ -141,4 +141,5 @@ test-suite solidity-service-test
     , process
     , solidity-service
     , text
+  build-tool-depends: hspec-discover:hspec-discover
   default-language: Haskell2010
