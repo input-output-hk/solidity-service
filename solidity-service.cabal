@@ -23,7 +23,6 @@ library
       Compilation
       Data.Text.Extra
       PathUtils
-      Riemann
       Webserver
       Webserver.API
       Webserver.Types
@@ -44,7 +43,6 @@ library
     , extra
     , filepath
     , gitrev
-    , hriemann
     , http-media
     , http-types
     , lens
@@ -91,7 +89,6 @@ executable solidity-service
     , filepath
     , gitrev
     , http-media
-    , hriemann
     , lens
     , lens-aeson
     , monad-logger
@@ -135,10 +132,10 @@ test-suite solidity-service-test
     , containers
     , hspec
     , hspec-core
-    , hriemann
     , lens
     , monad-logger
     , process
     , solidity-service
     , text
+  build-tool-depends: hspec-discover:hspec-discover
   default-language: Haskell2010
