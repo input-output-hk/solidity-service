@@ -26,7 +26,6 @@ import qualified Data.Map as Map
 import Data.Monoid ((<>))
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
-import qualified Network.Monitoring.Riemann.LoggingClient as Riemann
 import PathUtils (mkTaintedPath)
 import System.Process (CmdSpec(RawCommand), cmdspec)
 import Test.Hspec (Spec, describe, it, shouldBe, shouldNotBe, shouldSatisfy)
@@ -49,7 +48,7 @@ jsonFilesSpec =
       Right rpcRequest -> do
         result <-
           runStderrLoggingT $
-          compile Riemann.loggingClient $ view instructions rpcRequest
+          compile $ view instructions rpcRequest
         result `shouldSatisfy` isRight
 
 sampleFilesSpec :: Spec
@@ -68,7 +67,7 @@ sampleFilesSpec =
     pure $
       it ("should compile " <> file <> " to " <> show compiler) $ do
         compilation <- singleFileCompilation compiler file
-        result <- runStderrLoggingT $ compile Riemann.loggingClient compilation
+        result <- runStderrLoggingT $ compile compilation
         result `shouldSatisfy` isRight
 
 brokenFilesSpec :: Spec
@@ -81,7 +80,7 @@ brokenFilesSpec =
       it
         ("should throw a warning compiling " <> file <> " to " <> show compiler) $ do
         compilation <- singleFileCompilation compiler file
-        result <- runStderrLoggingT $ compile Riemann.loggingClient compilation
+        result <- runStderrLoggingT $ compile compilation
         result `shouldSatisfy` isLeft
         let Left (CompilationFailed code out err) = result
         code `shouldNotBe` 0

@@ -40,10 +40,6 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - servant-options-0.1.0.0
-- git: https://github.com/shmish111/hriemann.git
-  commit: b483853976f8621f5d80e736cb4937f1f2b2e6cd
-- kazura-queue-0.1.0.2
-- unagi-chan-0.4.1.0
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
